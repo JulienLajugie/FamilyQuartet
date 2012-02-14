@@ -44,6 +44,7 @@ public class InheritanceStateBlock {
 
 	/**
 	 * Analyzes a variant to generate stats on the number of MIE / SCE / Not informative variant per block
+	 * @param variant variant to analyze
 	 */
 	public void analyzeVariant(Variant variant) {
 		// we add the variant to the list of variant of the block

@@ -9,6 +9,7 @@ import dataStructures.InheritanceStateBlockList;
 import dataStructures.Variant;
 
 import exceptions.InvalidVCFLineException;
+import exceptions.VCFException;
 
 
 
@@ -83,16 +84,11 @@ public class GenerateBlockStats {
 						Variant currentVariant = new Variant(line);
 						// we don't process variants with more than one alternative allele or indels
 						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
-							throw new InvalidVCFLineException();
+							throw new InvalidVCFLineException("Indel or Variant with more than one alt allele", line);
 						}
-						// we don't process variants that are not informative or a mandelien inheritance state
-						/*if ((currentVariant.getInheritanceStates()[0] != InheritanceState.NOT_INFORMATIVE) &&
-									(currentVariant.getInheritanceStates()[0] != InheritanceState.MIE)) {
-								variantList.add(currentVariant);
-							}*/
 						blockList.analyzeVariant(currentVariant);
 						//System.out.println(line);
-					} catch (InvalidVCFLineException e) {
+					} catch (VCFException e) {
 						// do nothing
 					}					
 				}

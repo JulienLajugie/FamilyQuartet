@@ -10,7 +10,13 @@ import dataStructures.InheritanceStateBlock;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.Variant;
 import exceptions.InvalidVCFLineException;
+import exceptions.VCFException;
 
+
+/**
+ * Generates a VCF file filtered for Haplotyping
+ * @author Julien Lajugie
+ */
 public class GenerateVCFForHaploscript {
 
 
@@ -102,21 +108,21 @@ public class GenerateVCFForHaploscript {
 						Variant currentVariant = new Variant(line);
 						// we don't process variants with more than one alternative allele or indels
 						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
-							throw new InvalidVCFLineException();
+							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than 1 alt allele.", line);
 						}
 						// we don't want MIE
 						if ((currentVariant.getInheritanceStates()[0] == InheritanceState.MIE)) {
-							throw new InvalidVCFLineException();
+							throw new InvalidVCFLineException("Invalid VCF line: variant in MIE state.", line);
 						}
 						// we don't want SCE
 						InheritanceStateBlock variantInheritanceBlock = blockList.getBlock(currentVariant);
 						if ((variantInheritanceBlock != null) && (variantInheritanceBlock.isSCE(currentVariant))) {
-							throw new InvalidVCFLineException();
+							throw new InvalidVCFLineException("Invalid VCF line: variant in SCE state.", line);
 						}
 						// we don't want variants in compression blocks
 						InheritanceStateBlock variantCompressionBlock = compressionList.getBlock(currentVariant);
 						if (variantCompressionBlock != null) {
-							throw new InvalidVCFLineException();
+							throw new InvalidVCFLineException("Invalud VCF line: variant in compression block", line);
 						}						
 						// we don't want to have two vcf lines for the same position
 						if ((currentVariant.getPosition() == previousVariantPosition) &&
@@ -131,7 +137,7 @@ public class GenerateVCFForHaploscript {
 							previousLine = line;
 						}
 						
-					} catch (InvalidVCFLineException e) {
+					} catch (VCFException e) {
 						// do nothing
 					}					
 				}

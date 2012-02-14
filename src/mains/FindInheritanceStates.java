@@ -8,8 +8,7 @@ import java.util.List;
 
 import dataStructures.Variant;
 import dataStructures.VariantListAnalyzer;
-
-import exceptions.InvalidVCFLineException;
+import exceptions.VCFException;
 
 
 /**
@@ -70,9 +69,9 @@ public class FindInheritanceStates {
 						}*/
 						variantList.add(currentVariant);
 						//System.out.println(line);
-					} catch (InvalidVCFLineException e) {
+					} catch (VCFException e) {
 						// do nothing
-					}					
+					}	
 				}
 			}
 			// analyze the variant list

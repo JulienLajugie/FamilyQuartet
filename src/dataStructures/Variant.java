@@ -1,6 +1,8 @@
 package dataStructures;
 
 import dataStructures.InheritanceState;
+import exceptions.FilteredVCFLineException;
+import exceptions.InvalidVCFFieldException;
 import exceptions.InvalidVCFLineException;
 import utils.PatternToInheritanceStates;
 
@@ -29,12 +31,11 @@ public class Variant {
 	/**
 	 * Filter excluding the fully heterozygous genotypes
 	 */
-	private static final boolean USE_FILTER_HETEROZYGOUS = false;
+	private static final boolean USE_FILTER_HETEROZYGOUS_FILTERING = false;
 	/**
 	 * Filter excluding the 3/4 heterozygous genotypes
 	 */
-	private static final boolean USE_FILTER_3QUATER_HETEROZYGOUS = false;
-	
+	private static final boolean USE_FILTER_3QUATER_HETEROZYGOUS_FILTERING = false;
 	
 	private final String 				chromosome;				// chromosome of the variant		
 	private final int 					position;				// position of the variant
@@ -44,6 +45,10 @@ public class Variant {
 	private final AlleleType[] 			motherAlleles;			// alleles of the mother
 	private final AlleleType[] 			kid1Alleles;			// alleles of the 1st kid
 	private final AlleleType[] 			kid2Alleles;			// alleles of the 2nd kid
+	private final boolean				isFatherPhased;			// true if the father is phased
+	private final boolean				isMotherPhased;			// true if the mother is phased
+	private final boolean				isKid1Phased;			// true if kid 1
+	private final boolean				isKid2Phased;			// true if kid 2
 	private final String				genotypePattern;		// genotype pattern of the variant for the familly quartet
 	private final InheritanceState[]	inheritanceStates;		// inheritance state of the variant
 
@@ -52,9 +57,11 @@ public class Variant {
 	 * Creates an instance of {@link Variant}
 	 * @param VCFLine
 	 * @throws InvalidVCFLineException when the VCF line is not valid
+	 * @throws FilteredVCFLineException 
+	 * @throws InvalidVCFFieldException 
 	 */
 	@SuppressWarnings("unused")
-	public Variant(String VCFLine) throws InvalidVCFLineException {
+	public Variant(String VCFLine) throws InvalidVCFLineException, FilteredVCFLineException, InvalidVCFFieldException {
 		String[] splitLine = VCFLine.split("\t"); // VCF fields are tab delimited
 		// filter using the filter field
 		if (USE_FILTER_FIELD_FILTERING) {
@@ -76,7 +83,7 @@ public class Variant {
 			score += stringToQualityScore(splitLine[11].trim());
 			score += stringToQualityScore(splitLine[12].trim());
 			if (score < 200d) {
-				throw new InvalidVCFLineException();
+				throw new FilteredVCFLineException("Individual score sum", Double.toString(score));
 			}
 			/*double indScore = Math.min(stringToQualityScore(splitLine[9].trim()), stringToQualityScore(splitLine[10].trim()));
 			indScore = Math.min(indScore, stringToQualityScore(splitLine[11].trim()));
@@ -87,73 +94,87 @@ public class Variant {
 		}
 		// Filter using the min of the individual PL fields
 		if (USE_INDIVIDUALS_PL_FILTERING) {
-			int plScore = Math.min(formatFieldToPL(splitLine[9].trim()), formatFieldToPL(splitLine[10].trim()));
-			plScore = Math.min(plScore, formatFieldToPL(splitLine[11].trim()));
-			plScore = Math.min(plScore, formatFieldToPL(splitLine[12].trim()));
+			int plScore = Math.min(genotypeFieldToPL(splitLine[9].trim()), genotypeFieldToPL(splitLine[10].trim()));
+			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[11].trim()));
+			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[12].trim()));
 			if (plScore < 20) {
-				throw new InvalidVCFLineException();
+				throw new FilteredVCFLineException("PL", Integer.toString(plScore));
 			}
 		}
 		// extract the allele informations
 		fatherAlleles = stringToAlleleTypes(splitLine[9].trim());
+		isFatherPhased = isGenotypePhased(splitLine[9].trim());
 		motherAlleles = stringToAlleleTypes(splitLine[10].trim());
+		isMotherPhased = isGenotypePhased(splitLine[10].trim());
 		kid1Alleles = stringToAlleleTypes(splitLine[11].trim());
-		kid2Alleles = stringToAlleleTypes(splitLine[12].trim());		
+		isKid1Phased = isGenotypePhased(splitLine[11].trim());
+		kid2Alleles = stringToAlleleTypes(splitLine[12].trim());
+		isKid2Phased = isGenotypePhased(splitLine[12].trim());
 		// compute the genotype pattern
 		genotypePattern = computeGenotypePattern();		
 		// compute the inheritance states
 		inheritanceStates = PatternToInheritanceStates.getInheritanceStates(genotypePattern);
 		// exclude the fully heterozygote vectors if the filter is set to true
-		if (USE_FILTER_HETEROZYGOUS && genotypePattern.equals("ab/ab;ab/ab")) {
-			throw new InvalidVCFLineException(); 
+		if (USE_FILTER_HETEROZYGOUS_FILTERING && genotypePattern.equals("ab/ab;ab/ab")) {
+			throw new InvalidVCFLineException("Invalid VCF file: fully heterozygous variant", VCFLine); 
 		}
 		// exclude the 3/4 heterozygote vectors if the filter is set to true
-		if (USE_FILTER_3QUATER_HETEROZYGOUS && 
+		if (USE_FILTER_3QUATER_HETEROZYGOUS_FILTERING && 
 				((genotypePattern.equals("ab+aa;ab/ab") || genotypePattern.equals("aa+ab;ab/ab") || genotypePattern.equals("ab/ab;aa/ab")))) {
-			throw new InvalidVCFLineException();
+			throw new InvalidVCFLineException("Invalid VCF file: 3/4 heterozygous variant", VCFLine); 
 		}
+	}
+
+	
+	/**
+	 * @param genotypeField a genotype field from a VCF file
+	 * @return true if the specified genotype field is phased
+	 */
+	private boolean isGenotypePhased(String genotypeField) {
+		return (genotypeField.charAt(1) == '|');
 	}
 
 
 	/**
 	 * 
-	 * @param formatField format field following the GT:AD:DP:GQ:PL format
+	 * @param genotypeField format field following the GT:AD:DP:GQ:PL format
 	 * @return the minimum PL score (ie the max probability that the genotype is not the one returned by the genotyper)
+	 * @throws FilteredVCFLineException 
 	 * @throws InvalidVCFLineException if there is more than 1 alternative
 	 */
-	private int formatFieldToPL(String formatField) throws InvalidVCFLineException {
-		String[] splitFormatField = formatField.split(":");
+	private int genotypeFieldToPL(String genotypeField) throws InvalidVCFFieldException, FilteredVCFLineException {
+		String[] splitFormatField = genotypeField.split(":");
 		// the following happens when we have a ./. variant
-		if (splitFormatField.length != 5) {
-			throw new InvalidVCFLineException();
+		if (splitFormatField.length < 5) {
+			throw new InvalidVCFFieldException("Invalid VCF field: the genotype field has more than 5 subfield.", "Genotype Field", genotypeField);
 		}
 		String genotype = splitFormatField[0].trim();
 		String[] plScores = splitFormatField[4].trim().split(",");
 		int refRefScore = Integer.parseInt(plScores[0].trim());
 		int refAltScore = Integer.parseInt(plScores[1].trim());
 		int altAltScore = Integer.parseInt(plScores[2].trim());
-		if (genotype.equals("0/0")) {
+		if ((genotype.equals("0/0")) || (genotype.equals("0|0"))) {
 			return Math.min(refAltScore, altAltScore);
 		}
-		if (genotype.equals("0/1")) {
+		if ((genotype.equals("0/1")) || (genotype.equals("0|1")) || (genotype.equals("1|0"))) {
 			return Math.min(refRefScore, altAltScore);
 		}
-		if (genotype.equals("1/1")) {
+		if ((genotype.equals("1/1")) || (genotype.equals("1|1"))) {
 			return Math.min(refRefScore, refAltScore);
 		}
-		throw new InvalidVCFLineException();
+		throw new InvalidVCFFieldException("Invalid VCF field.", "Genotype Field", genotypeField);
 	}
 	
 	
 	/**
 	 * Throws an exception if the specified string is different from "PASS"
 	 * @param filterField
-	 * @throws InvalidVCFLineException
+	 * @throws FilteredVCFLineException
 	 */
-	private void filterFieldFiltering(String filterField) throws InvalidVCFLineException {
+	private void filterFieldFiltering(String filterField) throws FilteredVCFLineException {
 		if ((!filterField.equalsIgnoreCase("PASS"))) {
 			// && (!filterField.equalsIgnoreCase("TruthSensitivityTranche99.00to99.90"))) {
-			throw new InvalidVCFLineException(); 
+			throw new FilteredVCFLineException("Filter", filterField); 
 		}
 	}
 
@@ -163,58 +184,58 @@ public class Variant {
 	 * @param infoField info field of the VCF line
 	 * @throws InvalidVCFLineException
 	 */
-	private void GATKFilter(String infoField) throws InvalidVCFLineException {
+	private void GATKFilter(String infoField) throws InvalidVCFFieldException, FilteredVCFLineException {
 		// filter on the the QD field
 		int QDIndex = infoField.indexOf("QD=");
 		if (QDIndex == -1) {
-			throw new InvalidVCFLineException(); 
+			throw new InvalidVCFFieldException("Invalid VCF field: QD subfield not found", "Info Field", infoField);
 		} else {
 			String QDStr = infoField.substring(QDIndex + 3);
 			int indexSemicolon = QDStr.indexOf(";");
 			if (indexSemicolon == -1) {
-				throw new InvalidVCFLineException();
+				throw new InvalidVCFFieldException("Invalid VCF field: QD subfield not found", "Info Field", infoField);
 			} else {
 				QDStr = QDStr.substring(0, indexSemicolon);
 				double QD = Double.parseDouble(QDStr);
 				//System.out.println("QD=" + QD);
 				if (QD < 8.0) {
-					throw new InvalidVCFLineException();
+					throw new FilteredVCFLineException("QD", Double.toString(QD));
 				}
 			}			
 		}
 		// filter on the the HRun field
 		int HRunIndex = infoField.indexOf("HRun=");
 		if (HRunIndex == -1) {
-			throw new InvalidVCFLineException(); 
+			throw new InvalidVCFFieldException("Invalid VCF field: HRun subfield not found", "Info Field", infoField);
 		} else {
 			String HRunStr = infoField.substring(HRunIndex + 5);
 			int indexSemicolon = HRunStr.indexOf(";");
 			if (indexSemicolon == -1) {
-				throw new InvalidVCFLineException();
+				throw new InvalidVCFFieldException("Invalid HRun field: QD subfield not found", "Info Field", infoField);
 			} else {
 				HRunStr = HRunStr.substring(0, indexSemicolon);
 				double HRun = Double.parseDouble(HRunStr);
 				//System.out.println("HRun=" + HRun);
 				if (HRun > 5) {
-					throw new InvalidVCFLineException();
+					throw new FilteredVCFLineException("HRun", Double.toString(HRun));
 				}
 			}			
 		}
 		// filter on the the FS field
 		int FSIndex = infoField.indexOf("FS=");
 		if (FSIndex == -1) {
-			throw new InvalidVCFLineException(); 
+			throw new InvalidVCFFieldException("Invalid VCF field: FS subfield not found", "Info Field", infoField);
 		} else {
 			String FSStr = infoField.substring(FSIndex + 3);
 			int indexSemicolon = FSStr.indexOf(";");
 			if (indexSemicolon == -1) {
-				throw new InvalidVCFLineException();
+				throw new InvalidVCFFieldException("Invalid VCF field: FS subfield not found", "Info Field", infoField);
 			} else {
 				FSStr = FSStr.substring(0, indexSemicolon);
 				double FS = Double.parseDouble(FSStr);
 				//System.out.println("FS=" + FS);	
 				if (FS > 200) {
-					throw new InvalidVCFLineException();
+					throw new FilteredVCFLineException("FS", Double.toString(FS));
 				}			
 			}
 		}
@@ -224,9 +245,9 @@ public class Variant {
 	/**
 	 * @param genotypeInfo genotype information field of a VCF line
 	 * @return the allele types of a sample
-	 * @throws InvalidVCFLineException when the genotype doesn't contains information about the allele
+	 * @throws InvalidVCFFieldException
 	 */
-	private AlleleType[] stringToAlleleTypes(String genotypeInfo) throws InvalidVCFLineException {
+	private AlleleType[] stringToAlleleTypes(String genotypeInfo) throws InvalidVCFFieldException {
 		AlleleType[] resultAlleles = new AlleleType[2];
 		String[] splitGenotypeInfo = genotypeInfo.split(":"); // the genotype info field is colon-separated
 		String genotype = splitGenotypeInfo[0];	// the genotype is in the first field
@@ -236,14 +257,14 @@ public class Variant {
 		} else if (genotype.charAt(0) == '1') {
 			resultAlleles[0] = AlleleType.ALTERNATIVE_ALLELE;
 		} else {
-			throw new InvalidVCFLineException();
+			throw new InvalidVCFFieldException("Invalid VCF field: the first allele value must be 0 or 1", "Genotype Field", genotypeInfo);
 		}
 		if(genotype.charAt(2) == '0') {
 			resultAlleles[1] = AlleleType.REFERENCE_ALLELE;
 		} else if (genotype.charAt(2) == '1') {
 			resultAlleles[1] = AlleleType.ALTERNATIVE_ALLELE;
 		} else {
-			throw new InvalidVCFLineException();
+			throw new InvalidVCFFieldException("Invalid VCF field: the second allele value must be 0 or 1", "Genotype Field", genotypeInfo);
 		}
 		//System.out.print(genotype + "\t");
 		return resultAlleles;
@@ -463,6 +484,38 @@ public class Variant {
 	 */
 	public final InheritanceState[] getInheritanceStates() {
 		return inheritanceStates;
+	}
+	
+	
+	/**
+	 * @return the isFatherPhased
+	 */
+	public final boolean isFatherPhased() {
+		return isFatherPhased;
+	}
+
+
+	/**
+	 * @return the isMotherPhased
+	 */
+	public final boolean isMotherPhased() {
+		return isMotherPhased;
+	}
+
+
+	/**
+	 * @return the isKid1Phased
+	 */
+	public final boolean isKid1Phased() {
+		return isKid1Phased;
+	}
+
+
+	/**
+	 * @return the isKid2Phased
+	 */
+	public final boolean isKid2Phased() {
+		return isKid2Phased;
 	}
 
 

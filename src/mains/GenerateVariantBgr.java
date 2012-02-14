@@ -9,6 +9,7 @@ import dataStructures.InheritanceState;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.Variant;
 import exceptions.InvalidVCFLineException;
+import exceptions.VCFException;
 
 /**
  * Prints the variants in a bgr format.  Only print the variant have the same state as the 
@@ -84,14 +85,14 @@ public class GenerateVariantBgr {
 						Variant currentVariant = new Variant(line);
 						// we don't process variants with more than one alternative allele or indels
 						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
-							throw new InvalidVCFLineException();
+							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than one alt allele.", line);
 						}
 						if (STATE_OF_VARIANTS_TO_PRINT == null) {
 							blockList.printSCEVariantBrgFormat(currentVariant);	
 						} else {
 							currentVariant.printVariantBgrFormat(STATE_OF_VARIANTS_TO_PRINT);
 						}						
-					} catch (InvalidVCFLineException e) {
+					} catch (VCFException e) {
 						// do nothing
 					}					
 				}

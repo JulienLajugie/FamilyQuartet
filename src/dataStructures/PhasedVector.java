@@ -221,5 +221,11 @@ public class PhasedVector implements Comparable<PhasedVector> {
 		} else {
 			return 0;
 		}
-	}	
+	}
+
+
+	@Override
+	public String toString() {
+		return getFatherGenotype() + '+' + getMotherGenotype() + ';' + getKid1Genotype() + '+' + getKid2Genotype(); 
+	}
 }

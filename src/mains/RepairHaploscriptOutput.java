@@ -50,7 +50,6 @@ public class RepairHaploscriptOutput {
 			return false;
 		}
 		return true;
-
 	}
 
 

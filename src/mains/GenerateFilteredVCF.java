@@ -7,6 +7,7 @@ import java.io.IOException;
 import dataStructures.InheritanceState;
 import dataStructures.Variant;
 import exceptions.InvalidVCFLineException;
+import exceptions.VCFException;
 
 
 /**
@@ -54,15 +55,18 @@ public class GenerateFilteredVCF {
 						Variant currentVariant = new Variant(line);
 						// we don't process variants with more than one alternative allele or indels
 						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
-							throw new InvalidVCFLineException();
+							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than one alt allele.", line);
 						}
-						// we don't process variants that are not informative or a mandelien inheritance state
-						if ((currentVariant.getInheritanceStates()[0] == InheritanceState.NOT_INFORMATIVE) &&
-								(currentVariant.getInheritanceStates()[0] == InheritanceState.MIE)) {
-							throw new InvalidVCFLineException();
+						// we don't process variants that are not informative
+						if (currentVariant.getInheritanceStates()[0] == InheritanceState.NOT_INFORMATIVE) {
+							throw new InvalidVCFLineException("Invalid VCF line: not informative variant.", line);
+						}
+						// we don't process MIE variants
+						if (currentVariant.getInheritanceStates()[0] == InheritanceState.MIE) {	
+							throw new InvalidVCFLineException("Invalid VCF line: variant in MIE state.", line);
 						}
 						System.out.println(line);
-					} catch (InvalidVCFLineException e) {
+					} catch (VCFException e) {
 						// do nothing
 					}					
 				}

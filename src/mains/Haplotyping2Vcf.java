@@ -10,15 +10,20 @@ import dataStructures.InheritanceStateBlockList;
 import dataStructures.PhasedVector;
 import dataStructures.PhasedVectorList;
 import dataStructures.Variant;
-import exceptions.InvalidVCFLineException;
+import exceptions.VCFException;
 
+
+/**
+ * Phases a unphased VCF file using the result of the ISCA and the haplotyping software 
+ * @author Julien Lajugie
+ */
 public class Haplotyping2Vcf {
 
 	private static final String PHASED_SET_FORMAT_HEADER = 
 			"##FORMAT=<ID=PS,Number=1,Type=String,Description=\"Phase Set\">";
 	private static final String PHASED_SET_FORMAT_FIELD = "PS";
 
-	
+
 	/**
 	 * Usage: java Haplotyping2Vcf -v <path to the VCF file> -b <path to the block file> -p <path to the phased vector file>
 	 * @param args -v <path to the VCF file> -b <path to the block file> -p <path to the phased vector file>
@@ -79,7 +84,7 @@ public class Haplotyping2Vcf {
 
 
 	/**
-	 * Generates a phased VCF file filtered for ISCA
+	 * Phases a unphased VCF file using the result of the ISCA and the haplotyping software
 	 * @param VCFFile input VCF file
 	 * @param blockFile ISCA file with the inheritance state blocks
 	 * @param phasedVectorFile phased vector file from Haplotyping 
@@ -91,13 +96,14 @@ public class Haplotyping2Vcf {
 		blockList.loadFromISCAFile(blockFile);
 		// load the phased vector file
 		PhasedVectorList vectorList = new PhasedVectorList();
-		vectorList.loadFromFile(phasedVectorFile);
+		vectorList.loadFromHaplotypingFile(phasedVectorFile);
 
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
 			String line = null;
 			boolean formatHeaderSet = false;
+			InheritanceStateBlock previousBlock = null;
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
@@ -110,23 +116,28 @@ public class Haplotyping2Vcf {
 					}
 					System.out.println(line);
 				} else {
-					Variant variant;
 					try {
+						String newVcfLine = "";
 						String[] splitLine = line.split("\t");
 						String chromosome = splitLine[0].trim();
 						int position = Integer.parseInt(splitLine[1].trim());
 						InheritanceStateBlock block = blockList.getBlock(chromosome, position);
-						variant = new Variant(line);
-						String newVcfLine = "";
-						if (variant.getGenotypePattern().equals("aa/aa;aa/aa")) {
-							// fully homozygous vectors are not phased by haploscripting
-							newVcfLine = substituteVcfLine(splitLine, block, variant);
+						// the first variant of the block should not be phased
+						if ((previousBlock == null) || (!previousBlock.equals(block))) {
+							newVcfLine = substituteVcfLine(splitLine, null, (PhasedVector) null);
 						} else {
-							PhasedVector phasedVector = vectorList.getPhasedVector(chromosome, position);
-							newVcfLine = substituteVcfLine(splitLine, block, phasedVector);
+							Variant variant = new Variant(line);
+							if (variant.getGenotypePattern().equals("aa/aa;aa/aa")) {
+								// fully homozygous vectors are not phased by haploscripting
+								newVcfLine = substituteVcfLine(splitLine, block, variant);
+							} else {
+								PhasedVector phasedVector = vectorList.getPhasedVector(chromosome, position);
+								newVcfLine = substituteVcfLine(splitLine, block, phasedVector);
+							}
 						}
 						System.out.println(newVcfLine);
-					} catch (InvalidVCFLineException e) {
+						previousBlock = block;
+					} catch (VCFException e) {
 						// do nothing
 					}
 				}
@@ -151,11 +162,13 @@ public class Haplotyping2Vcf {
 		String motherGenotype = splitLine[10].trim();
 		String kid1Genotype = splitLine[11].trim();
 		String kid2Genotype = splitLine[12].trim();
+		// we phase the VCF if possible
 		if (phasedVector != null) {			
 			fatherGenotype = substituteGenotype(fatherGenotype, phasedVector.getFatherGenotype());
 			motherGenotype = substituteGenotype(motherGenotype, phasedVector.getMotherGenotype());
 			kid1Genotype = substituteGenotype(kid1Genotype, phasedVector.getKid1Genotype());
 			kid2Genotype = substituteGenotype(kid2Genotype, phasedVector.getKid2Genotype());
+			// we add the block information in the PS field of the VCF if possible
 			if (block != null) {
 				String phaseSet = Integer.toString(block.getStartPosition());
 				formatField += ":" + PHASED_SET_FORMAT_FIELD;
