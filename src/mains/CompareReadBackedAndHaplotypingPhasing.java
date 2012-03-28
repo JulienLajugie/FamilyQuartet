@@ -105,43 +105,52 @@ public class CompareReadBackedAndHaplotypingPhasing {
 					if ((haplotypingPhasedVector == null) || (vcfPhasedVector == null)) {
 						//System.out.println(chromosome + '\t' + position + '\t' + haplotypingPhasedVector + '\t' + vcfPhasedVector);
 					} else {
-						int result = paternalSeries.addGenotypes(haplotypingPhasedVector.getFatherGenotype(), vcfPhasedVector.getFatherGenotype());
+						/*int result = paternalSeries.addGenotypes(haplotypingPhasedVector.getFatherGenotype(), vcfPhasedVector.getFatherGenotype(), chromosome, position);
 						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
 							compatibleGenotypesCount += paternalSeries.getCompatibleGenotypes();
 							incompatibleGenotypesCount += paternalSeries.getIncompatibleGenotypes();
-							if (paternalSeries.getIncompatibleGenotypes() > 0) {
-								paternalSeries.print();
-							}
+							//if (paternalSeries.getIncompatibleGenotypes() > 0) {
+								paternalSeries.printResultPhasingBgr();
+							//}
 							paternalSeries.reset();
-						}
+						}*/
 						// mother
-						result = maternalSeries.addGenotypes(haplotypingPhasedVector.getMotherGenotype(), vcfPhasedVector.getMotherGenotype());
+						int result = maternalSeries.addGenotypes(haplotypingPhasedVector.getMotherGenotype(), vcfPhasedVector.getMotherGenotype(), chromosome, position);
 						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
 							compatibleGenotypesCount += maternalSeries.getCompatibleGenotypes();
 							incompatibleGenotypesCount += maternalSeries.getIncompatibleGenotypes();
+							//if (maternalSeries.getIncompatibleGenotypes() > 0) {
+								maternalSeries.printResultPhasingBgr();
+							//}
 							maternalSeries.reset();
 						}
-						// kid 1
-						result = kid1Series.addGenotypes(haplotypingPhasedVector.getKid1Genotype(), vcfPhasedVector.getKid1Genotype());
-						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
-							compatibleGenotypesCount += kid1Series.getCompatibleGenotypes();
-							incompatibleGenotypesCount += kid1Series.getIncompatibleGenotypes();
-							kid1Series.reset();
-						}
-						// kid 2
-						result = kid2Series.addGenotypes(haplotypingPhasedVector.getKid2Genotype(), vcfPhasedVector.getKid2Genotype());
-						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
-							compatibleGenotypesCount += kid2Series.getCompatibleGenotypes();
-							incompatibleGenotypesCount += kid2Series.getIncompatibleGenotypes();
-							kid2Series.reset();
-						}
+//						// kid 1
+//						result = kid1Series.addGenotypes(haplotypingPhasedVector.getKid1Genotype(), vcfPhasedVector.getKid1Genotype(), position);
+//						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
+//							compatibleGenotypesCount += kid1Series.getCompatibleGenotypes();
+//							incompatibleGenotypesCount += kid1Series.getIncompatibleGenotypes();
+//							/*if (kid1Series.getIncompatibleGenotypes() > 0) {
+//								kid1Series.printResultPhasingBgr(chromosome);
+//							}*/
+//							kid1Series.reset();
+//						}
+//						// kid 2
+//						result = kid2Series.addGenotypes(haplotypingPhasedVector.getKid2Genotype(), vcfPhasedVector.getKid2Genotype(), position);
+//						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
+//							compatibleGenotypesCount += kid2Series.getCompatibleGenotypes();
+//							incompatibleGenotypesCount += kid2Series.getIncompatibleGenotypes();							
+//							/*if (kid2Series.getIncompatibleGenotypes() > 0) {
+//								kid2Series.printResultPhasingBgr(chromosome);
+//							}*/
+//							kid2Series.reset();
+//						}
 					}
 				}
 			}
-			double ratioCompatible = compatibleGenotypesCount / (double) (compatibleGenotypesCount + incompatibleGenotypesCount) * 100d; 
-			System.out.println("Compatible vector count: " + compatibleGenotypesCount
-					+ ", incompatible vector count: " + incompatibleGenotypesCount
-					+ ", ratio: " + ratioCompatible);
+//			double ratioCompatible = compatibleGenotypesCount / (double) (compatibleGenotypesCount + incompatibleGenotypesCount) * 100d; 
+//			System.out.println("Compatible vector count: " + compatibleGenotypesCount
+//					+ ", incompatible vector count: " + incompatibleGenotypesCount
+//					+ ", ratio: " + ratioCompatible);
 		} finally {
 			if (reader != null) {
 				reader.close();

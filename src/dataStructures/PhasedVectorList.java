@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import exceptions.InvalidVCFFieldException;
 import exceptions.VCFException;
 
 
@@ -123,10 +122,13 @@ public class PhasedVectorList {
 							phasedVectorMap.get(chromosome).add(vectorToAdd);
 						}
 					} catch (VCFException e) {
-						if (e instanceof InvalidVCFFieldException) {
-							e.printStackTrace();
+						/*if (e instanceof InvalidVCFFieldException) {
+							//e.printStackTrace();
 							System.err.println(((InvalidVCFFieldException) e).getVCFFieldName() + " - " + ((InvalidVCFFieldException) e).getVCFFieldValue());
-						}
+						}*/
+						/*if (e instanceof FilteredVCFLineException) {
+							System.out.println(((FilteredVCFLineException) e).getFilterName());
+						}*/
 					}				
 				}
 			}

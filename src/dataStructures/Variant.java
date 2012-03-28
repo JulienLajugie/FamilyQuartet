@@ -36,6 +36,14 @@ public class Variant {
 	 * Filter excluding the 3/4 heterozygous genotypes
 	 */
 	private static final boolean USE_FILTER_3QUATER_HETEROZYGOUS_FILTERING = false;
+	/**
+	 * Only consider the genotypes with a score above this threshold as phased
+	 */
+	private static final double PHASING_QUALITY_FILTER_THRESHOLD = 0;
+	/**
+	 * Filters out MIE variants if set to true
+	 */
+	private static final boolean USE_MIE_FILTERING = false;
 	
 	private final String 				chromosome;				// chromosome of the variant		
 	private final int 					position;				// position of the variant
@@ -51,7 +59,8 @@ public class Variant {
 	private final boolean				isKid2Phased;			// true if kid 2
 	private final String				genotypePattern;		// genotype pattern of the variant for the familly quartet
 	private final InheritanceState[]	inheritanceStates;		// inheritance state of the variant
-
+	private final int 					phasingQualityIndex;	// index of the phasing quality field
+	
 
 	/**
 	 * Creates an instance of {@link Variant}
@@ -97,23 +106,36 @@ public class Variant {
 			int plScore = Math.min(genotypeFieldToPL(splitLine[9].trim()), genotypeFieldToPL(splitLine[10].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[11].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[12].trim()));
-			if (plScore < 20) {
+			//if (plScore < 20) {
+			if (plScore < 30) {
 				throw new FilteredVCFLineException("PL", Integer.toString(plScore));
 			}
 		}
+		if (VCFLine.contains("PhasingInconsistent")) {
+			phasingQualityIndex = -1;
+			isFatherPhased = false;
+			isMotherPhased = false;
+			isKid1Phased = false;
+			isKid2Phased = false;
+		} else {
+			phasingQualityIndex = getPhasingQualityFieldIndex(splitLine[8].trim());
+			isFatherPhased = isGenotypePhased(splitLine[9].trim());
+			isMotherPhased = isGenotypePhased(splitLine[10].trim());
+			isKid1Phased = isGenotypePhased(splitLine[11].trim());
+			isKid2Phased = isGenotypePhased(splitLine[12].trim());			
+		}
 		// extract the allele informations
 		fatherAlleles = stringToAlleleTypes(splitLine[9].trim());
-		isFatherPhased = isGenotypePhased(splitLine[9].trim());
-		motherAlleles = stringToAlleleTypes(splitLine[10].trim());
-		isMotherPhased = isGenotypePhased(splitLine[10].trim());
-		kid1Alleles = stringToAlleleTypes(splitLine[11].trim());
-		isKid1Phased = isGenotypePhased(splitLine[11].trim());
-		kid2Alleles = stringToAlleleTypes(splitLine[12].trim());
-		isKid2Phased = isGenotypePhased(splitLine[12].trim());
+		motherAlleles = stringToAlleleTypes(splitLine[10].trim());		
+		kid1Alleles = stringToAlleleTypes(splitLine[11].trim());		
+		kid2Alleles = stringToAlleleTypes(splitLine[12].trim());		
 		// compute the genotype pattern
 		genotypePattern = computeGenotypePattern();		
 		// compute the inheritance states
 		inheritanceStates = PatternToInheritanceStates.getInheritanceStates(genotypePattern);
+		if (USE_MIE_FILTERING && (inheritanceStates[0] == InheritanceState.MIE)) {
+			throw new FilteredVCFLineException("MIE", "MIE");
+		}
 		// exclude the fully heterozygote vectors if the filter is set to true
 		if (USE_FILTER_HETEROZYGOUS_FILTERING && genotypePattern.equals("ab/ab;ab/ab")) {
 			throw new InvalidVCFLineException("Invalid VCF file: fully heterozygous variant", VCFLine); 
@@ -127,10 +149,34 @@ public class Variant {
 
 	
 	/**
+	 * @param genotypeFieldDesc the gentype field description from the VCF line (eg: GT:AD:DP:GQ:PL:PQ)
+	 * @return the index of the PQ subfield (fields are separeted by ":") or -1 if not found
+	 */
+	private int getPhasingQualityFieldIndex(String genotypeFieldDesc) {
+		String[] splitGenotypeFieldDesc = genotypeFieldDesc.split(":");
+		for (int i = 0; i < splitGenotypeFieldDesc.length; i++) {
+			if (splitGenotypeFieldDesc[i].trim().equals("PQ")) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	
+	/**
 	 * @param genotypeField a genotype field from a VCF file
 	 * @return true if the specified genotype field is phased
 	 */
 	private boolean isGenotypePhased(String genotypeField) {
+		if (phasingQualityIndex != -1) {
+			String[] splitGenotypeField = genotypeField.split(":");
+			if (splitGenotypeField.length > phasingQualityIndex)  {
+				double phasingQuality = Double.parseDouble(splitGenotypeField[phasingQualityIndex].trim());
+				if (phasingQuality < PHASING_QUALITY_FILTER_THRESHOLD) {
+					return false;
+				}
+			}
+		}
 		return (genotypeField.charAt(1) == '|');
 	}
 
@@ -139,14 +185,13 @@ public class Variant {
 	 * 
 	 * @param genotypeField format field following the GT:AD:DP:GQ:PL format
 	 * @return the minimum PL score (ie the max probability that the genotype is not the one returned by the genotyper)
-	 * @throws FilteredVCFLineException 
 	 * @throws InvalidVCFLineException if there is more than 1 alternative
 	 */
-	private int genotypeFieldToPL(String genotypeField) throws InvalidVCFFieldException, FilteredVCFLineException {
+	private int genotypeFieldToPL(String genotypeField) throws InvalidVCFFieldException {
 		String[] splitFormatField = genotypeField.split(":");
 		// the following happens when we have a ./. variant
 		if (splitFormatField.length < 5) {
-			throw new InvalidVCFFieldException("Invalid VCF field: the genotype field has more than 5 subfield.", "Genotype Field", genotypeField);
+			throw new InvalidVCFFieldException("Invalid VCF field: the genotype field has less than 5 subfield.", "Genotype Field", genotypeField);
 		}
 		String genotype = splitFormatField[0].trim();
 		String[] plScores = splitFormatField[4].trim().split(",");
@@ -174,7 +219,7 @@ public class Variant {
 	private void filterFieldFiltering(String filterField) throws FilteredVCFLineException {
 		if ((!filterField.equalsIgnoreCase("PASS"))) {
 			// && (!filterField.equalsIgnoreCase("TruthSensitivityTranche99.00to99.90"))) {
-			throw new FilteredVCFLineException("Filter", filterField); 
+			throw new FilteredVCFLineException("Filter Field", filterField); 
 		}
 	}
 
