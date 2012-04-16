@@ -44,7 +44,7 @@ public class Variant {
 	 * Filters out MIE variants if set to true
 	 */
 	private static final boolean USE_MIE_FILTERING = false;
-	
+
 	private final String 				chromosome;				// chromosome of the variant		
 	private final int 					position;				// position of the variant
 	private final String 				referenceAllele;		// reference allele of the variant
@@ -60,7 +60,7 @@ public class Variant {
 	private final String				genotypePattern;		// genotype pattern of the variant for the familly quartet
 	private final InheritanceState[]	inheritanceStates;		// inheritance state of the variant
 	private final int 					phasingQualityIndex;	// index of the phasing quality field
-	
+
 
 	/**
 	 * Creates an instance of {@link Variant}
@@ -106,8 +106,8 @@ public class Variant {
 			int plScore = Math.min(genotypeFieldToPL(splitLine[9].trim()), genotypeFieldToPL(splitLine[10].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[11].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[12].trim()));
-			//if (plScore < 20) {
-			if (plScore < 30) {
+			if (plScore < 20) {
+			//if (plScore < 30) {
 				throw new FilteredVCFLineException("PL", Integer.toString(plScore));
 			}
 		}
@@ -147,7 +147,7 @@ public class Variant {
 		}
 	}
 
-	
+
 	/**
 	 * @param genotypeFieldDesc the gentype field description from the VCF line (eg: GT:AD:DP:GQ:PL:PQ)
 	 * @return the index of the PQ subfield (fields are separeted by ":") or -1 if not found
@@ -161,8 +161,8 @@ public class Variant {
 		}
 		return -1;
 	}
-	
-	
+
+
 	/**
 	 * @param genotypeField a genotype field from a VCF file
 	 * @return true if the specified genotype field is phased
@@ -209,8 +209,8 @@ public class Variant {
 		}
 		throw new InvalidVCFFieldException("Invalid VCF field.", "Genotype Field", genotypeField);
 	}
-	
-	
+
+
 	/**
 	 * Throws an exception if the specified string is different from "PASS"
 	 * @param filterField
@@ -530,8 +530,8 @@ public class Variant {
 	public final InheritanceState[] getInheritanceStates() {
 		return inheritanceStates;
 	}
-	
-	
+
+
 	/**
 	 * @return the isFatherPhased
 	 */
@@ -585,7 +585,7 @@ public class Variant {
 				"genotype state2";
 	}
 
-	
+
 	@Override
 	public String toString() {
 		String variantString = "";
@@ -624,8 +624,8 @@ public class Variant {
 		}
 		return variantString;
 	}
-	
-	
+
+
 	/**
 	 * This methods prints in bgr format in the standard output the coordinates of the specified variant
 	 * if the variant states correspond to the specified states
@@ -641,7 +641,80 @@ public class Variant {
 			}
 		}
 		if (statesFoundCount == states.length) {*/
-			System.out.println(this.getChromosome() + "\t" + this.getPosition() + "\t" + this.getPosition() + "\t1");
+		System.out.println(this.getChromosome() + "\t" + this.getPosition() + "\t" + this.getPosition() + "\t1");
 		//}
 	}
+
+
+	/**
+	 * @param member a member of the family
+	 * @return true if the variant is homozygous for the specified family member
+	 */
+	public boolean isHomozygous(QuartetMember member) {
+		switch (member) {
+		case FATHER:
+			return fatherAlleles[0] == fatherAlleles[1];
+		case MOTHER:
+			return motherAlleles[0] == motherAlleles[1];
+		case KID1:
+			return kid1Alleles[0] == kid1Alleles[1];
+		case KID2:
+			return kid2Alleles[0] == kid2Alleles[1];
+		default:
+			return false;
+		}
+	}
+	
+
+	/**
+	 * @param member a member of the family
+	 * @return true if the variant is heterozygous for the specified family member
+	 */
+	public boolean isHeterozygous(QuartetMember member) {
+		switch (member) {
+		case FATHER:
+			return fatherAlleles[0] != fatherAlleles[1];
+		case MOTHER:
+			return motherAlleles[0] != motherAlleles[1];
+		case KID1:
+			return kid1Alleles[0] != kid1Alleles[1];
+		case KID2:
+			return kid2Alleles[0] != kid2Alleles[1];
+		default:
+			return false;
+		}
+	}
+	
+	
+	/**
+	 * @param member a member of the family
+	 * @return true if variant is a SNP for the specified member 
+	 */
+	public boolean isSNP(QuartetMember member) {
+		switch (member) {
+		case FATHER:
+			return (fatherAlleles[0] != AlleleType.REFERENCE_ALLELE) || (fatherAlleles[1] != AlleleType.REFERENCE_ALLELE);
+		case MOTHER:
+			return (motherAlleles[0] != AlleleType.REFERENCE_ALLELE) || (motherAlleles[1] != AlleleType.REFERENCE_ALLELE);
+		case KID1:
+			return (kid1Alleles[0] != AlleleType.REFERENCE_ALLELE) || (kid1Alleles[1] != AlleleType.REFERENCE_ALLELE);
+		case KID2:
+			return (kid2Alleles[0] != AlleleType.REFERENCE_ALLELE) || (kid2Alleles[1] != AlleleType.REFERENCE_ALLELE);
+		default:
+			return false;
+		}
+	}
+
+
+	/**
+	 * @return true if the children are identical, false otherwise
+	 */
+	public boolean areChildrenIdentical() {
+		if (((kid1Alleles[0] == kid2Alleles[0]) && (kid1Alleles[1] == kid2Alleles[1])) 
+			|| ((kid1Alleles[0]) == kid2Alleles[1]) && (kid1Alleles[1] == kid2Alleles[0])) {
+				return true;
+			} else {
+				return false;
+			}
+	}	
 }

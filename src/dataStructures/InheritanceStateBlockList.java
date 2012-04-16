@@ -17,6 +17,7 @@ import java.util.Map;
  */
 public class InheritanceStateBlockList {
 
+
 	private final Map<String, List<InheritanceStateBlock>> ISBlockMap; // list of blocks organised by chromosome
 
 
@@ -312,5 +313,13 @@ public class InheritanceStateBlockList {
 				}
 			}
 		}
+	}
+	
+	
+	/**
+	 * @return the inheritant state blocks organized in a map sorted per chromosome
+	 */
+	public final Map<String, List<InheritanceStateBlock>> getBlocks() {
+		return ISBlockMap;
 	}
 }

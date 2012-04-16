@@ -27,7 +27,7 @@ public class CreateBlocksFromTrioBgr {
 	 * Number of differences needed between the state of the variants before and after 
 	 * the studied variant to consider it as potentially at the boundary of a block
 	 */
-	private final static int SUM_SCORE_THRESHOLD = 8; 
+	private final static int SUM_SCORE_THRESHOLD = 6; 
 
 
 	/**
@@ -74,20 +74,22 @@ public class CreateBlocksFromTrioBgr {
 				if (line.charAt(0) != '#') {
 					String[] splitLine = line.split("\t");
 					String chromo = splitLine[0].trim();
-					int position = Integer.parseInt(splitLine[1].trim());
-					int score = (int) Double.parseDouble(splitLine[3].trim());
-					if (previousChromo == null) {
-						previousChromo = chromo;
-					}
-					if (!chromo.equals(previousChromo)) {
-						computeCurrentChromoBlocks(previousChromo, positionList, scoreList);
-						positionList.clear();
-						scoreList.clear();
-						previousChromo = chromo;
-					} else {
-						positionList.add(position);
-						scoreList.add(score);
-					}
+					//if (chromo.equalsIgnoreCase("chr2") || chromo.equalsIgnoreCase("chr3")) {
+						int position = Integer.parseInt(splitLine[1].trim());
+						int score = (int) Double.parseDouble(splitLine[3].trim());
+						if (previousChromo == null) {
+							previousChromo = chromo;
+						}
+						if (!chromo.equals(previousChromo)) {
+							computeCurrentChromoBlocks(previousChromo, positionList, scoreList);
+							positionList.clear();
+							scoreList.clear();
+							previousChromo = chromo;
+						} else {
+							positionList.add(position);
+							scoreList.add(score);
+						}
+					//}
 				}
 			}
 		} finally {
