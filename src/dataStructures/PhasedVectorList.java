@@ -91,27 +91,7 @@ public class PhasedVectorList {
 						Variant variant = new Variant(line);
 						int position = variant.getPosition();
 						String chromosome = variant.getChromosome();
-						// generate the phased vector
-						String phasedVector = "";
-						phasedVector += alleleToPhasedVector(variant.getFatherAlleles()[0], variant.isFatherPhased());
-						phasedVector += alleleToPhasedVector(variant.getFatherAlleles()[1], variant.isFatherPhased());
-						phasedVector += alleleToPhasedVector(variant.getMotherAlleles()[0], variant.isMotherPhased());
-						phasedVector += alleleToPhasedVector(variant.getMotherAlleles()[1], variant.isMotherPhased());
-						phasedVector += alleleToPhasedVector(variant.getKid1Alleles()[0], variant.isKid1Phased());
-						phasedVector += alleleToPhasedVector(variant.getKid1Alleles()[1], variant.isKid1Phased());
-						phasedVector += alleleToPhasedVector(variant.getKid2Alleles()[0], variant.isKid2Phased());
-						phasedVector += alleleToPhasedVector(variant.getKid2Alleles()[1], variant.isKid2Phased());
-						// generate the unphased vector
-						String unphasedVector = "";
-						unphasedVector += alleleToUnphasedVector(variant.getFatherAlleles()[0]);
-						unphasedVector += alleleToUnphasedVector(variant.getFatherAlleles()[1]);
-						unphasedVector += alleleToUnphasedVector(variant.getMotherAlleles()[0]);
-						unphasedVector += alleleToUnphasedVector(variant.getMotherAlleles()[1]);
-						unphasedVector += alleleToUnphasedVector(variant.getKid1Alleles()[0]);
-						unphasedVector += alleleToUnphasedVector(variant.getKid1Alleles()[1]);
-						unphasedVector += alleleToUnphasedVector(variant.getKid2Alleles()[0]);
-						unphasedVector += alleleToUnphasedVector(variant.getKid2Alleles()[1]);
-						PhasedVector vectorToAdd = new PhasedVector(position, unphasedVector, phasedVector);
+						PhasedVector vectorToAdd = new PhasedVector(position, variant);
 						//System.out.println(chromosome + '\t' + position + '\t' + unphasedVector +'\t' + phasedVector + '\t' + vectorToAdd.getFatherGenotype() + '\t' + vectorToAdd.getMotherGenotype() + '\t' + vectorToAdd.getKid1Genotype() + '\t' + vectorToAdd.getKid2Genotype());
 						// if the list doesn't contain the chromosome we add it
 						if (!phasedVectorMap.containsKey(chromosome)) {
@@ -122,14 +102,8 @@ public class PhasedVectorList {
 							phasedVectorMap.get(chromosome).add(vectorToAdd);
 						}
 					} catch (VCFException e) {
-						/*if (e instanceof InvalidVCFFieldException) {
-							//e.printStackTrace();
-							System.err.println(((InvalidVCFFieldException) e).getVCFFieldName() + " - " + ((InvalidVCFFieldException) e).getVCFFieldValue());
-						}*/
-						/*if (e instanceof FilteredVCFLineException) {
-							System.out.println(((FilteredVCFLineException) e).getFilterName());
-						}*/
-					}				
+						// do nothing
+					}
 				}
 			}
 			// we sort the list in position order
@@ -140,32 +114,6 @@ public class PhasedVectorList {
 			}
 		}
 	}
-
-
-	/**
-	 * @param allele an {@link AlleleType}
-	 * @param isPhased true if the sample is phased
-	 * @return a phased vector item for the specified allele
-	 */
-	private char alleleToPhasedVector(AlleleType allele, boolean isPhased) {
-		if ((allele == null) || (!isPhased)) {
-			return '.';
-		}
-		return (allele == AlleleType.REFERENCE_ALLELE ? 'a' : 'b');
-	}
-
-
-	/**
-	 * @param allele an {@link AlleleType}
-	 * @return an unphased vector item for the specified allele
-	 */	
-	private char alleleToUnphasedVector(AlleleType allele) {
-		if (allele == null) {
-			return '.';
-		}
-		return (allele == AlleleType.REFERENCE_ALLELE ? 'a' : 'b');
-	}
-
 
 
 	/**
@@ -180,6 +128,19 @@ public class PhasedVectorList {
 
 	/**
 	 * @param chromosome a chromosome
+	 * @return the list of phased vector for the specified chromosome
+	 */
+	public List<PhasedVector> getPhasedVectorList(String chromosome) {
+		if (!phasedVectorMap.containsKey(chromosome)) {
+			return null;
+		}
+		List<PhasedVector> vectorList = phasedVectorMap.get(chromosome);
+		return vectorList;
+	}
+	
+	
+	/**
+	 * @param chromosome a chromosome
 	 * @param position a position
 	 * @return the {@link PhasedVector} on the specified chromosome at the specified position
 	 */
@@ -191,7 +152,7 @@ public class PhasedVectorList {
 		return findPhasedVector(vectorList, position);		
 	}
 
-
+	
 	/**
 	 * Binary search of {@link PhasedVector} sorted by position.
 	 * @param list list of phased vectors
