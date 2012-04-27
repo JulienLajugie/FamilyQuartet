@@ -43,7 +43,7 @@ public class Variant {
 	/**
 	 * Filters out MIE variants if set to true
 	 */
-	private static final boolean USE_MIE_FILTERING = false;
+	private static final boolean USE_MIE_FILTERING = true;
 
 	private final String 				chromosome;				// chromosome of the variant		
 	private final int 					position;				// position of the variant
@@ -106,7 +106,7 @@ public class Variant {
 			int plScore = Math.min(genotypeFieldToPL(splitLine[9].trim()), genotypeFieldToPL(splitLine[10].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[11].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[12].trim()));
-			if (plScore < 20) {
+			if (plScore < 50) {
 			//if (plScore < 30) {
 				throw new FilteredVCFLineException("PL", Integer.toString(plScore));
 			}

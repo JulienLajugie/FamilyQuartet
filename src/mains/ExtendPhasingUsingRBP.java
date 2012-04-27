@@ -18,9 +18,11 @@ import dataStructures.QuartetMember;
 public class ExtendPhasingUsingRBP {
 
 
-	private final static String[] CHROMOSOMES = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", 
-		"chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"};
-
+	private final static String[] CHROMOSOMES = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",	"chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"};
+	//private final static String[] CHROMOSOMES = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7"};
+	private final static QuartetMember[] MEMBERS = {QuartetMember.MOTHER};
+	//private final static QuartetMember[] MEMBERS = QuartetMember.values();
+	
 	/**
 	 * Usage: java ExtendPhasingUsingRBP.java -g <path the genetic phasing vcf file> -p <path to the physical phasing vcf file>
 	 * @param args -g <path the genetic phasing vcf file> -p <path to the physical phasing vcf file>
@@ -99,17 +101,21 @@ public class ExtendPhasingUsingRBP {
 	 * @param physicalVectorList
 	 */
 	private static void mergeVectors(PhasedVectorList geneticVectorList, PhasedVectorList physicalVectorList) {
+		int validInsertCount = 0;
+		int phasedVariantCount = 0;
 		// we analyze each chromosome defined in the CHROMOSOME constant
 		for (String chromosome: CHROMOSOMES) {
 			List<PhasedVector> geneticVectors = geneticVectorList.getPhasedVectorList(chromosome);
 			List<PhasedVector> physicalVectors = physicalVectorList.getPhasedVectorList(chromosome);
 			// we analyze each member of the family
-			for (QuartetMember currentMember: QuartetMember.values()) {
+			for (QuartetMember currentMember: MEMBERS) {
 				List<Integer> unphasedIndexes = new ArrayList<>();
 				// if the genetic vectors and the physical vectors don't have the same size there is a pb with the files (or the program...)
 				if ((geneticVectors != null) && (physicalVectors != null)) {
 					if (geneticVectors.size() != physicalVectors.size()) {
 						System.err.println("The genectic and physical lists don't have the same ammount of data");
+						System.err.println("genetic size=" + geneticVectors.size());
+						System.err.println("physical size=" + physicalVectors.size());					
 					} else {
 						// we create a list containing the index of all the genetic vectors not phased (that we can potentially phase)
 						for (int i = 0; i < geneticVectors.size(); i++) {
@@ -132,6 +138,23 @@ public class ExtendPhasingUsingRBP {
 										PhasedVectorsInsert insert = new PhasedVectorsInsert(chromosome, currentUnphasedIndex, currentMember);
 										insert.generateInsert(geneticVectorsToAnalyze, physicalVectorsToAnalyze);
 										lastAnalyzedIndex = insert.getIndexLastPhasedVector();
+										if (insert.isValid() && (insert.getTotalGoodVectorCount() >= 1)) {
+											int start = geneticVectors.get(firstIndex).getPosition();
+											int stop =  geneticVectors.get(lastIndex).getPosition();
+											int score = insert.getTotalGoodVectorCount() - insert.getTotalBadVectorCount();
+											//validInsertCount++;
+											//int insertLength = insert.getIndexLastPhasedVector() - insert.getIndexFirstPhasedVector() + 1;
+											//phasedVariantCount += insertLength;
+											//System.out.println(insertLength);
+											if (insert.isGeneticVectorInvertionNeeded()) {
+												//int indexStart = Math.max(0, insert.getIndexFirstPhasedVector() - 1);
+												//int indexStop = Math.min(geneticVectors.size() - 1, insert.getIndexLastPhasedVector() + 1);
+												score = -score;
+												//System.out.println(" *** GOOD = " + insert.getTotalGoodVectorCount() + " *** BAD = " + insert.getTotalBadVectorCount() + " *** ");
+												//System.out.println("Vector (length=" + insertLength + ", member=" + currentMember + ") needs to be inverted: " + chromosome + ':' + start + '-' + stop);
+											}
+											System.out.println(chromosome + '\t' + start + '\t' + stop + '\t' + score);
+										}
 									}
 								}
 							}
@@ -140,6 +163,7 @@ public class ExtendPhasingUsingRBP {
 				}
 			}
 		}
+		//System.out.println("valid insert count:" + validInsertCount +", phased variant count:" + phasedVariantCount);
 	}
 
 

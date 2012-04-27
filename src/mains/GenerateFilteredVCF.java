@@ -50,7 +50,9 @@ public class GenerateFilteredVCF {
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
-				if (line.charAt(0) != '#') {
+				if (line.charAt(0) == '#') {
+					System.out.println(line);
+				} else {
 					try {
 						Variant currentVariant = new Variant(line);
 						// we don't process variants with more than one alternative allele or indels
@@ -58,9 +60,9 @@ public class GenerateFilteredVCF {
 							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than one alt allele.", line);
 						}
 						// we don't process variants that are not informative
-						if (currentVariant.getInheritanceStates()[0] == InheritanceState.NOT_INFORMATIVE) {
+						/*if (currentVariant.getInheritanceStates()[0] == InheritanceState.NOT_INFORMATIVE) {
 							throw new InvalidVCFLineException("Invalid VCF line: not informative variant.", line);
-						}
+						}*/
 						// we don't process MIE variants
 						if (currentVariant.getInheritanceStates()[0] == InheritanceState.MIE) {	
 							throw new InvalidVCFLineException("Invalid VCF line: variant in MIE state.", line);

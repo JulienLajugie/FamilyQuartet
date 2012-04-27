@@ -133,7 +133,7 @@ public class PhasedGenotypesSeries {
 		}
 		List<Integer> compatibleList = new ArrayList<Integer>();
 		List<Integer> incompatibleList = new ArrayList<Integer>();
-		//if (genotypes.size() > 1) {
+//		if (genotypes.size() > 1) {
 			for (int i = 0; i < genotypes.size(); i++) {
 				String currentGenotype = genotypes.get(i);
 				Integer currentPosition = positions.get(i);
@@ -143,16 +143,14 @@ public class PhasedGenotypesSeries {
 					incompatibleList.add(currentPosition);
 				}
 			}
-			//			for (Integer currentPosition: positions) {
-			//				if (((compatibleList.contains(currentPosition)) && (compatibleList.size() >= incompatibleList.size())) ||
-			//						((incompatibleList.contains(currentPosition)) && (incompatibleList.size() > compatibleList.size()))) {
-			//					System.out.println(currentChromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
-			//				} else {
-			//					System.out.println(currentChromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
-			//				}
-			//			}
-
-
+//			for (Integer currentPosition: positions) {
+//				if (((compatibleList.contains(currentPosition)) && (compatibleList.size() >= incompatibleList.size())) ||
+//						((incompatibleList.contains(currentPosition)) && (incompatibleList.size() > compatibleList.size()))) {
+//					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
+//				} else {
+//					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
+//				}
+//			}
 			for (Integer currentPosition: positions) {
 				if (compatibleList.contains(currentPosition)) {
 					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
@@ -160,7 +158,7 @@ public class PhasedGenotypesSeries {
 					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
 				}
 			}
-		//}
+//		}
 	}
 
 
