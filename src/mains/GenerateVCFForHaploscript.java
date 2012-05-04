@@ -5,7 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import dataStructures.InheritanceState;
+import dataStructures.InheritanceStateBlockListFactory;
+import dataStructures.QuartetInheritanceState;
 import dataStructures.InheritanceStateBlock;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.Variant;
@@ -88,11 +89,11 @@ public class GenerateVCFForHaploscript {
 	 */
 	private static void generateVCFForHaploscript(File VCFFile, File blockFile, File compressionFile) throws IOException {
 		// load the inheritance block list
-		InheritanceStateBlockList blockList = new InheritanceStateBlockList();
-		blockList.loadFromISCAFile(blockFile);
+		InheritanceStateBlockList<QuartetInheritanceState> blockList;
+		blockList = InheritanceStateBlockListFactory.createFromISCAFile(blockFile);
 		// load the compression block list
-		InheritanceStateBlockList compressionList = new InheritanceStateBlockList();
-		blockList.loadFromBgrFile(compressionFile);
+		InheritanceStateBlockList<QuartetInheritanceState> compressionList;
+		compressionList = InheritanceStateBlockListFactory.createFromQuartetBgrFile(compressionFile);
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
@@ -111,16 +112,16 @@ public class GenerateVCFForHaploscript {
 							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than 1 alt allele.", line);
 						}
 						// we don't want MIE
-						if ((currentVariant.getInheritanceStates()[0] == InheritanceState.MIE)) {
+						if ((currentVariant.getInheritanceStates()[0] == QuartetInheritanceState.MIE)) {
 							throw new InvalidVCFLineException("Invalid VCF line: variant in MIE state.", line);
 						}
 						// we don't want SCE
-						InheritanceStateBlock variantInheritanceBlock = blockList.getBlock(currentVariant);
+						InheritanceStateBlock<QuartetInheritanceState> variantInheritanceBlock = blockList.getBlock(currentVariant);
 						if ((variantInheritanceBlock != null) && (variantInheritanceBlock.isSCE(currentVariant))) {
 							throw new InvalidVCFLineException("Invalid VCF line: variant in SCE state.", line);
 						}
 						// we don't want variants in compression blocks
-						InheritanceStateBlock variantCompressionBlock = compressionList.getBlock(currentVariant);
+						InheritanceStateBlock<QuartetInheritanceState> variantCompressionBlock = compressionList.getBlock(currentVariant);
 						if (variantCompressionBlock != null) {
 							throw new InvalidVCFLineException("Invalud VCF line: variant in compression block", line);
 						}						

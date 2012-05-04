@@ -5,7 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import dataStructures.InheritanceState;
+import dataStructures.InheritanceStateBlockListFactory;
+import dataStructures.QuartetInheritanceState;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.Variant;
 import exceptions.InvalidVCFLineException;
@@ -19,7 +20,7 @@ import exceptions.VCFException;
 public class GenerateVariantBgr {
 
 
-	private static final InheritanceState[] STATE_OF_VARIANTS_TO_PRINT = {InheritanceState.NON_IDENTICAL, InheritanceState.IDENTICAL};
+	private static final QuartetInheritanceState[] STATE_OF_VARIANTS_TO_PRINT = {QuartetInheritanceState.NON_IDENTICAL, QuartetInheritanceState.IDENTICAL};
 
 
 	/**
@@ -71,8 +72,8 @@ public class GenerateVariantBgr {
 	 * @throws IOException if the VCF file is not valid
 	 */
 	private static void generateBlockStats(File VCFFile, File blockFile) throws IOException {
-		InheritanceStateBlockList blockList = new InheritanceStateBlockList();
-		blockList.loadFromISCAFile(blockFile);		
+		InheritanceStateBlockList<QuartetInheritanceState> blockList;
+		blockList = InheritanceStateBlockListFactory.createFromISCAFile(blockFile);
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
@@ -87,8 +88,8 @@ public class GenerateVariantBgr {
 						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
 							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than one alt allele.", line);
 						}
-						if (STATE_OF_VARIANTS_TO_PRINT == null) {
-							blockList.printSCEVariantBrgFormat(currentVariant);	
+						if ((STATE_OF_VARIANTS_TO_PRINT == null) && (blockList.getBlock(currentVariant).isSCE(currentVariant))) {
+							currentVariant.printVariantBgrFormat();
 						} else {
 							currentVariant.printVariantBgrFormat(STATE_OF_VARIANTS_TO_PRINT);
 						}						

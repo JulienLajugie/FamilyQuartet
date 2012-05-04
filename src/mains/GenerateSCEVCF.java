@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import dataStructures.InheritanceStateBlockList;
+import dataStructures.InheritanceStateBlockListFactory;
+import dataStructures.QuartetInheritanceState;
 import dataStructures.Variant;
 import exceptions.InvalidVCFLineException;
 import exceptions.VCFException;
@@ -16,7 +18,7 @@ import exceptions.VCFException;
  */
 public class GenerateSCEVCF {
 
-	
+
 	/**
 	 * Usage: java GenerateSCEVCF -v <path to the VCF file> -b <path to the block file>
 	 * @param args -v <path to the VCF file> -b <path to the block file>
@@ -65,8 +67,8 @@ public class GenerateSCEVCF {
 	 * @throws IOException if the VCF file is not valid
 	 */
 	private static void generateBlockStats(File VCFFile, File blockFile) throws IOException {
-		InheritanceStateBlockList blockList = new InheritanceStateBlockList();
-		blockList.loadFromISCAFile(blockFile);		
+		InheritanceStateBlockList<QuartetInheritanceState> blockList;
+		blockList = InheritanceStateBlockListFactory.createFromISCAFile(blockFile);	
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
@@ -81,7 +83,9 @@ public class GenerateSCEVCF {
 						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
 							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than one alt allele.", line);
 						}
-						blockList.printSCEVariantVCFFormat(currentVariant, line);											
+						if (blockList.getBlock(currentVariant).isSCE(currentVariant)) {
+							System.out.println(line);
+						}
 					} catch (VCFException e) {
 						// do nothing
 					}					

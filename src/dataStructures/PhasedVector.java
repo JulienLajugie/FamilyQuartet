@@ -40,18 +40,18 @@ public class PhasedVector implements Comparable<PhasedVector> {
 	 * @param variant variant to represent as a vector
 	 */
 	private void variant2Vector(Variant variant) {
-		setBit(0, variant.getFatherAlleles()[0] == AlleleType.REFERENCE_ALLELE);
-		setBit(1, variant.getFatherAlleles()[1] == AlleleType.REFERENCE_ALLELE);
-		setBit(2, variant.isFatherPhased());
-		setBit(3, variant.getMotherAlleles()[0] == AlleleType.REFERENCE_ALLELE);
-		setBit(4, variant.getMotherAlleles()[1] == AlleleType.REFERENCE_ALLELE);
-		setBit(5, variant.isMotherPhased());
-		setBit(6, variant.getKid1Alleles()[0] == AlleleType.REFERENCE_ALLELE);
-		setBit(7, variant.getKid1Alleles()[1] == AlleleType.REFERENCE_ALLELE);
-		setBit(8, variant.isKid1Phased());
-		setBit(9, variant.getKid2Alleles()[0] == AlleleType.REFERENCE_ALLELE);
-		setBit(10, variant.getKid2Alleles()[1] == AlleleType.REFERENCE_ALLELE);
-		setBit(11, variant.isKid2Phased());
+		setBit(0, variant.getAlleles(QuartetMember.FATHER)[0] == AlleleType.REFERENCE_ALLELE);
+		setBit(1, variant.getAlleles(QuartetMember.FATHER)[1] == AlleleType.REFERENCE_ALLELE);
+		setBit(2, variant.isPhased(QuartetMember.FATHER));
+		setBit(3, variant.getAlleles(QuartetMember.MOTHER)[0] == AlleleType.REFERENCE_ALLELE);
+		setBit(4, variant.getAlleles(QuartetMember.MOTHER)[1] == AlleleType.REFERENCE_ALLELE);
+		setBit(5, variant.isPhased(QuartetMember.MOTHER));
+		setBit(6, variant.getAlleles(QuartetMember.KID1)[0] == AlleleType.REFERENCE_ALLELE);
+		setBit(7, variant.getAlleles(QuartetMember.KID1)[1] == AlleleType.REFERENCE_ALLELE);
+		setBit(8, variant.isPhased(QuartetMember.KID1));
+		setBit(9, variant.getAlleles(QuartetMember.KID2)[0] == AlleleType.REFERENCE_ALLELE);
+		setBit(10, variant.getAlleles(QuartetMember.KID2)[1] == AlleleType.REFERENCE_ALLELE);
+		setBit(11, variant.isPhased(QuartetMember.KID2));
 	}
 
 

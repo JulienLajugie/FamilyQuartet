@@ -1,6 +1,6 @@
 package dataStructures;
 
-import dataStructures.InheritanceState;
+import dataStructures.QuartetInheritanceState;
 import exceptions.FilteredVCFLineException;
 import exceptions.InvalidVCFFieldException;
 import exceptions.InvalidVCFLineException;
@@ -45,21 +45,21 @@ public class Variant {
 	 */
 	private static final boolean USE_MIE_FILTERING = true;
 
-	private final String 				chromosome;				// chromosome of the variant		
-	private final int 					position;				// position of the variant
-	private final String 				referenceAllele;		// reference allele of the variant
-	private final String 				alternatievAllele;		// alternative allele of the variant
-	private final AlleleType[] 			fatherAlleles;			// alleles of the father
-	private final AlleleType[] 			motherAlleles;			// alleles of the mother
-	private final AlleleType[] 			kid1Alleles;			// alleles of the 1st kid
-	private final AlleleType[] 			kid2Alleles;			// alleles of the 2nd kid
-	private final boolean				isFatherPhased;			// true if the father is phased
-	private final boolean				isMotherPhased;			// true if the mother is phased
-	private final boolean				isKid1Phased;			// true if kid 1
-	private final boolean				isKid2Phased;			// true if kid 2
-	private final String				genotypePattern;		// genotype pattern of the variant for the familly quartet
-	private final InheritanceState[]	inheritanceStates;		// inheritance state of the variant
-	private final int 					phasingQualityIndex;	// index of the phasing quality field
+	private final String 					chromosome;					// chromosome of the variant		
+	private final int 						position;					// position of the variant
+	private final String 					referenceAllele;			// reference allele of the variant
+	private final String 					alternatievAllele;			// alternative allele of the variant
+	private final AlleleType[] 				fatherAlleles;				// alleles of the father
+	private final AlleleType[] 				motherAlleles;				// alleles of the mother
+	private final AlleleType[] 				kid1Alleles;				// alleles of the 1st kid
+	private final AlleleType[] 				kid2Alleles;				// alleles of the 2nd kid
+	private boolean							isFatherPhased;				// true if the father is phased
+	private boolean							isMotherPhased;				// true if the mother is phased
+	private boolean							isKid1Phased;				// true if kid 1
+	private boolean							isKid2Phased;				// true if kid 2
+	private final String					genotypePattern;			// genotype pattern of the variant for the familly quartet
+	private final QuartetInheritanceState[]	quartetInheritanceStates;	// inheritance state of the variant
+	private final int 						phasingQualityIndex;		// index of the phasing quality field
 
 
 	/**
@@ -94,20 +94,14 @@ public class Variant {
 			if (score < 200d) {
 				throw new FilteredVCFLineException("Individual score sum", Double.toString(score));
 			}
-			/*double indScore = Math.min(stringToQualityScore(splitLine[9].trim()), stringToQualityScore(splitLine[10].trim()));
-			indScore = Math.min(indScore, stringToQualityScore(splitLine[11].trim()));
-			indScore = Math.min(indScore, stringToQualityScore(splitLine[12].trim()));
-			if (indScore < 25d) {
-				throw new InvalidVCFLineException();
-			}*/
 		}
 		// Filter using the min of the individual PL fields
 		if (USE_INDIVIDUALS_PL_FILTERING) {
 			int plScore = Math.min(genotypeFieldToPL(splitLine[9].trim()), genotypeFieldToPL(splitLine[10].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[11].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[12].trim()));
-			if (plScore < 50) {
-			//if (plScore < 30) {
+			if (plScore < 20) {
+				//if (plScore < 30) {
 				throw new FilteredVCFLineException("PL", Integer.toString(plScore));
 			}
 		}
@@ -132,8 +126,8 @@ public class Variant {
 		// compute the genotype pattern
 		genotypePattern = computeGenotypePattern();		
 		// compute the inheritance states
-		inheritanceStates = PatternToInheritanceStates.getInheritanceStates(genotypePattern);
-		if (USE_MIE_FILTERING && (inheritanceStates[0] == InheritanceState.MIE)) {
+		quartetInheritanceStates = PatternToInheritanceStates.getInheritanceStates(genotypePattern);
+		if (USE_MIE_FILTERING && (quartetInheritanceStates[0] == QuartetInheritanceState.MIE)) {
 			throw new FilteredVCFLineException("MIE", "MIE");
 		}
 		// exclude the fully heterozygote vectors if the filter is set to true
@@ -485,35 +479,24 @@ public class Variant {
 
 
 	/**
-	 * @return the father's alleles
+	 * @param member a quartet member
+	 * @return the alleles of the specified quartet member
 	 */
-	public final AlleleType[] getFatherAlleles() {
-		return fatherAlleles;
+	public final AlleleType[] getAlleles(QuartetMember member) {
+		switch (member) {
+		case FATHER:
+			return fatherAlleles;
+		case MOTHER:
+			return motherAlleles;
+		case KID1:
+			return kid1Alleles;
+		case KID2:
+			return kid2Alleles;
+		default:
+			return null;
+		}
 	}
 
-
-	/**
-	 * @return the mother's alleles
-	 */
-	public final AlleleType[] getMotherAlleles() {
-		return motherAlleles;
-	}
-
-
-	/**
-	 * @return the 1st kid's alleles
-	 */
-	public final AlleleType[] getKid1Alleles() {
-		return kid1Alleles;
-	}
-
-
-	/**
-	 * @return the 2nd kid's alleles
-	 */
-	public final AlleleType[] getKid2Alleles() {
-		return kid2Alleles;
-	}
 
 
 	/**
@@ -527,43 +510,63 @@ public class Variant {
 	/**
 	 * @return the inheritance states of the variant for the family quartet
 	 */
-	public final InheritanceState[] getInheritanceStates() {
-		return inheritanceStates;
+	public final QuartetInheritanceState[] getInheritanceStates() {
+		return quartetInheritanceStates;
 	}
 
 
 	/**
-	 * @return the isFatherPhased
+	 * @param member a quartet member
+	 * @return true if the specified quartet member is phased, false otherwise
 	 */
-	public final boolean isFatherPhased() {
-		return isFatherPhased;
+	public final Boolean isPhased(QuartetMember member) {
+		switch (member) {
+		case FATHER:
+			return isFatherPhased;
+		case MOTHER:
+			return isMotherPhased;
+		case KID1:
+			return isKid1Phased;
+		case KID2:
+			return isKid2Phased;
+		default:
+			return null;
+		}
 	}
-
-
+	
+	
 	/**
-	 * @return the isMotherPhased
+	 * Phase the specified quartet member
+	 * @param member a quarte member
+	 * @param firstAllele first allele of the member (paternal allele in children)
+	 * @param secondAllele second allele of the member (maternal allele in children)
 	 */
-	public final boolean isMotherPhased() {
-		return isMotherPhased;
+	public final void phase(QuartetMember member, AlleleType firstAllele, AlleleType secondAllele) {
+		switch (member) {
+		case FATHER:
+			fatherAlleles[0] = firstAllele;
+			fatherAlleles[1] = secondAllele;
+			isFatherPhased = true;
+			break;
+		case MOTHER:
+			motherAlleles[0] = firstAllele;
+			motherAlleles[1] = secondAllele;
+			isMotherPhased = true;
+			break;
+		case KID1:
+			kid1Alleles[0] = firstAllele;
+			kid2Alleles[1] = secondAllele;
+			isKid1Phased = true;
+			break;
+		case KID2:
+			kid2Alleles[0] = firstAllele;
+			kid2Alleles[1] = secondAllele;
+			isKid2Phased = true;
+			break;
+		}		
 	}
-
-
-	/**
-	 * @return the isKid1Phased
-	 */
-	public final boolean isKid1Phased() {
-		return isKid1Phased;
-	}
-
-
-	/**
-	 * @return the isKid2Phased
-	 */
-	public final boolean isKid2Phased() {
-		return isKid2Phased;
-	}
-
-
+	
+	
 	/**
 	 * @return a string with the different field names of a variant
 	 */
@@ -615,10 +618,10 @@ public class Variant {
 		variantString += "\t";
 		variantString += genotypePattern;
 		variantString += "\t";
-		variantString += inheritanceStates[0];
+		variantString += quartetInheritanceStates[0];
 		variantString += "\t";
-		if (inheritanceStates.length > 1) {
-			variantString += inheritanceStates[1];
+		if (quartetInheritanceStates.length > 1) {
+			variantString += quartetInheritanceStates[1];
 		} else {
 			variantString += "-";
 		}
@@ -627,22 +630,30 @@ public class Variant {
 
 
 	/**
+	 * Prints the variant on the bedgraph format
+	 */
+	public void printVariantBgrFormat() {		
+		System.out.println(this.getChromosome() + "\t" + this.getPosition() + "\t" + this.getPosition() + "\t1");		
+	}
+
+
+	/**
 	 * This methods prints in bgr format in the standard output the coordinates of the specified variant
 	 * if the variant states correspond to the specified states
-	 * @param states {@link InheritanceState}
+	 * @param states {@link QuartetInheritanceState}
 	 */
-	public void printVariantBgrFormat(InheritanceState... states) {
-		/*int statesFoundCount = 0;		
-		for (InheritanceState currentVariantState: this.getInheritanceStates()) {
-			for (InheritanceState currentInputState: states) {
+	public void printVariantBgrFormat(QuartetInheritanceState... states) {
+		int statesFoundCount = 0;		
+		for (QuartetInheritanceState currentVariantState: this.getInheritanceStates()) {
+			for (QuartetInheritanceState currentInputState: states) {
 				if (currentVariantState == currentInputState) {
 					statesFoundCount++;
 				}
 			}
 		}
-		if (statesFoundCount == states.length) {*/
-		System.out.println(this.getChromosome() + "\t" + this.getPosition() + "\t" + this.getPosition() + "\t1");
-		//}
+		if (statesFoundCount == states.length) {
+			System.out.println(this.getChromosome() + "\t" + this.getPosition() + "\t" + this.getPosition() + "\t1");
+		}
 	}
 
 
@@ -664,7 +675,7 @@ public class Variant {
 			return false;
 		}
 	}
-	
+
 
 	/**
 	 * @param member a member of the family
@@ -684,8 +695,8 @@ public class Variant {
 			return false;
 		}
 	}
-	
-	
+
+
 	/**
 	 * @param member a member of the family
 	 * @return true if variant is a SNP for the specified member 
@@ -711,10 +722,36 @@ public class Variant {
 	 */
 	public boolean areChildrenIdentical() {
 		if (((kid1Alleles[0] == kid2Alleles[0]) && (kid1Alleles[1] == kid2Alleles[1])) 
-			|| ((kid1Alleles[0]) == kid2Alleles[1]) && (kid1Alleles[1] == kid2Alleles[0])) {
+				|| ((kid1Alleles[0]) == kid2Alleles[1]) && (kid1Alleles[1] == kid2Alleles[0])) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+
+	/**
+	 * @return true if the Variant is an MIE, false otherwise
+	 */
+	public boolean isMIE() {
+		for (QuartetInheritanceState currentState: quartetInheritanceStates) {
+			if (currentState.equals(QuartetInheritanceState.MIE)) {
 				return true;
-			} else {
-				return false;
 			}
-	}	
+		}
+		return false;
+	}
+
+
+	/**
+	 * @return true if the Variant is not informative, false otherwise
+	 */
+	public boolean isNotInformative() {
+		for (QuartetInheritanceState currentState: quartetInheritanceStates) {
+			if (currentState.equals(QuartetInheritanceState.NOT_INFORMATIVE)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

@@ -7,8 +7,10 @@ import java.io.IOException;
 
 import dataStructures.InheritanceStateBlock;
 import dataStructures.InheritanceStateBlockList;
+import dataStructures.InheritanceStateBlockListFactory;
 import dataStructures.PhasedVector;
 import dataStructures.PhasedVectorList;
+import dataStructures.QuartetInheritanceState;
 import dataStructures.Variant;
 import exceptions.VCFException;
 
@@ -92,8 +94,7 @@ public class Haplotyping2Vcf {
 	 */
 	private static void haplotyping2Vcf(File VCFFile, File blockFile, File phasedVectorFile) throws IOException {
 		// load the inheritance block list
-		InheritanceStateBlockList blockList = new InheritanceStateBlockList();
-		blockList.loadFromISCAFile(blockFile);
+		InheritanceStateBlockList<QuartetInheritanceState> blockList = InheritanceStateBlockListFactory.createFromISCAFile(blockFile);
 		// load the phased vector file
 		PhasedVectorList vectorList = new PhasedVectorList();
 		vectorList.loadFromHaplotypingFile(phasedVectorFile);
@@ -103,7 +104,7 @@ public class Haplotyping2Vcf {
 			reader = new BufferedReader(new FileReader(VCFFile));
 			String line = null;
 			boolean formatHeaderSet = false;
-			InheritanceStateBlock previousBlock = null;
+			InheritanceStateBlock<QuartetInheritanceState> previousBlock = null;
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
@@ -121,7 +122,7 @@ public class Haplotyping2Vcf {
 						String[] splitLine = line.split("\t");
 						String chromosome = splitLine[0].trim();
 						int position = Integer.parseInt(splitLine[1].trim());
-						InheritanceStateBlock block = blockList.getBlock(chromosome, position);
+						InheritanceStateBlock<QuartetInheritanceState> block = blockList.getBlock(chromosome, position);
 						// the first variant of the block should not be phased
 						if ((previousBlock == null) || (!previousBlock.equals(block))) {
 							newVcfLine = substituteVcfLine(splitLine, null, (PhasedVector) null);
@@ -156,7 +157,7 @@ public class Haplotyping2Vcf {
 	 * @param phasedVector vector phased by haploscripting
 	 * @return the phased vcf line
 	 */
-	private static String substituteVcfLine(String[] splitLine, InheritanceStateBlock block, PhasedVector phasedVector) {
+	private static String substituteVcfLine(String[] splitLine, InheritanceStateBlock<QuartetInheritanceState> block, PhasedVector phasedVector) {
 		String formatField = splitLine[8].trim();
 		String fatherGenotype = splitLine[9].trim();
 		String motherGenotype = splitLine[10].trim();
@@ -212,7 +213,7 @@ public class Haplotyping2Vcf {
 	 * @param Variant current variant
 	 * @return the phased vcf line of a homozygous variant
 	 */
-	private static String substituteVcfLine(String[] splitLine, InheritanceStateBlock block, Variant variant) {
+	private static String substituteVcfLine(String[] splitLine, InheritanceStateBlock<QuartetInheritanceState> block, Variant variant) {
 		String formatField = splitLine[8].trim();
 		String fatherGenotype = splitLine[9].trim();
 		String motherGenotype = splitLine[10].trim();

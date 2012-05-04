@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import dataStructures.InheritanceState;
+import dataStructures.QuartetInheritanceState;
 import dataStructures.Variant;
 import exceptions.InvalidVCFLineException;
 import exceptions.VCFException;
@@ -64,7 +64,7 @@ public class GenerateFilteredVCF {
 							throw new InvalidVCFLineException("Invalid VCF line: not informative variant.", line);
 						}*/
 						// we don't process MIE variants
-						if (currentVariant.getInheritanceStates()[0] == InheritanceState.MIE) {	
+						if (currentVariant.getInheritanceStates()[0] == QuartetInheritanceState.MIE) {	
 							throw new InvalidVCFLineException("Invalid VCF line: variant in MIE state.", line);
 						}
 						System.out.println(line);

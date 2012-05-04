@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import dataStructures.InheritanceStateBlockList;
+import dataStructures.InheritanceStateBlockListFactory;
+import dataStructures.QuartetInheritanceState;
 
 /**
  * Prints the blocks in a bgr format
@@ -56,8 +58,8 @@ public class GenerateBlockBgr {
 	 * @throws IOException if the block file is not valid
 	 */
 	private static void generateBlockBgr(File blockFile) throws IOException {
-		InheritanceStateBlockList blockList = new InheritanceStateBlockList();
-		blockList.loadFromISCAFile(blockFile);		
+		InheritanceStateBlockList<QuartetInheritanceState> blockList;
+		blockList = InheritanceStateBlockListFactory.createFromISCAFile(blockFile);
 		blockList.printBlocksBgrFormat();
 	}
 }

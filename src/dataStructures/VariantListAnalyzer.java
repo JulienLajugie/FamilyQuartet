@@ -26,7 +26,7 @@ public class VariantListAnalyzer {
 	private final double[]			nonInfomativeAvgs;			// moving average on non informative variants
 	private final double[]			nonMendelians;				// list of non mendelian variants
 	private final double[]			nonMendelianAvgs;			// moving average on mendelian variants
-	private final InheritanceState[]dominantInheritanceStates;	// dominant inheritance state of the variants
+	private final QuartetInheritanceState[]dominantInheritanceStates;	// dominant inheritance state of the variants
 
 
 	/**
@@ -35,12 +35,12 @@ public class VariantListAnalyzer {
 	 */
 	public VariantListAnalyzer(List<Variant> variantList) {
 		this.variantList = variantList;
-		this.identicals = computeStateScores(InheritanceState.IDENTICAL);
-		this.maternalIdenticals = computeStateScores(InheritanceState.MATERNAL);
-		this.paternalIdenticals = computeStateScores(InheritanceState.PATERNAL);
-		this.nonIdenticals = computeStateScores(InheritanceState.NON_IDENTICAL);
-		this.nonInfomatives = computeStateScores(InheritanceState.NOT_INFORMATIVE);
-		this.nonMendelians = computeStateScores(InheritanceState.MIE);
+		this.identicals = computeStateScores(QuartetInheritanceState.IDENTICAL);
+		this.maternalIdenticals = computeStateScores(QuartetInheritanceState.MATERNAL);
+		this.paternalIdenticals = computeStateScores(QuartetInheritanceState.PATERNAL);
+		this.nonIdenticals = computeStateScores(QuartetInheritanceState.NON_IDENTICAL);
+		this.nonInfomatives = computeStateScores(QuartetInheritanceState.NOT_INFORMATIVE);
+		this.nonMendelians = computeStateScores(QuartetInheritanceState.MIE);
 
 		this.identicalAvgs = computeAvgStateScores(identicals);
 		this.maternalIdenticalAvgs = computeAvgStateScores(maternalIdenticals);
@@ -55,18 +55,18 @@ public class VariantListAnalyzer {
 	
 	/**
 	 * Computes the scores of the specified state
-	 * @param inheritanceState an inheritance state
+	 * @param quartetInheritanceState an inheritance state
 	 * @return an array containing a score for each variant for the specified inheritance state
 	 */
-	private double[] computeStateScores(InheritanceState inheritanceState) {
+	private double[] computeStateScores(QuartetInheritanceState quartetInheritanceState) {
 		double[] resultState = new double[variantList.size()];
 		for (int i = 0; i < variantList.size(); i++) {
 			Variant currentVariant = variantList.get(i);
-			if (currentVariant.getInheritanceStates()[0] == inheritanceState) {
+			if (currentVariant.getInheritanceStates()[0] == quartetInheritanceState) {
 				double score = 1 / (double) currentVariant.getInheritanceStates().length;
 				resultState[i] = score;
 			} else if (currentVariant.getInheritanceStates().length > 1) {
-				if (currentVariant.getInheritanceStates()[1] == inheritanceState) {
+				if (currentVariant.getInheritanceStates()[1] == quartetInheritanceState) {
 					resultState[i] = 0.5;
 				}
 			}			
@@ -152,29 +152,29 @@ public class VariantListAnalyzer {
 	/**
 	 * @return an array with the dominant inheritance state of each variant.  
 	 */
-	private InheritanceState[] computeDominantInheritanceStates() {
-		InheritanceState[] dominantInheritanceStates = new InheritanceState[variantList.size()];
+	private QuartetInheritanceState[] computeDominantInheritanceStates() {
+		QuartetInheritanceState[] dominantInheritanceStates = new QuartetInheritanceState[variantList.size()];
 		for (int i = 0; i < variantList.size(); i++) {
-			InheritanceState dominantState = InheritanceState.IDENTICAL;
+			QuartetInheritanceState dominantState = QuartetInheritanceState.IDENTICAL;
 			double maxScore = identicalAvgs[i];
 			if (maternalIdenticalAvgs[i] > maxScore) {
 				maxScore = maternalIdenticalAvgs[i];
-				dominantState = InheritanceState.MATERNAL;
+				dominantState = QuartetInheritanceState.MATERNAL;
 			}
 			if (paternalIdenticalAvgs[i] > maxScore) {
 				maxScore = paternalIdenticalAvgs[i];
-				dominantState = InheritanceState.PATERNAL;
+				dominantState = QuartetInheritanceState.PATERNAL;
 			}
 			if (nonIdenticalAvgs[i] > maxScore) {
 				maxScore = nonIdenticalAvgs[i];
-				dominantState = InheritanceState.NON_IDENTICAL;
+				dominantState = QuartetInheritanceState.NON_IDENTICAL;
 			}
 			if (nonInfomativeAvgs[i] > maxScore) {
 				maxScore = nonInfomativeAvgs[i];
-				dominantState = InheritanceState.NOT_INFORMATIVE;
+				dominantState = QuartetInheritanceState.NOT_INFORMATIVE;
 			}
 			if (nonMendelianAvgs[i] > maxScore) {
-				dominantState = InheritanceState.MIE;
+				dominantState = QuartetInheritanceState.MIE;
 			}
 			dominantInheritanceStates[i] = dominantState;			
 		}		
@@ -289,7 +289,7 @@ public class VariantListAnalyzer {
 	/**
 	 * @return the dominantInheritanceStates
 	 */
-	public final InheritanceState[] getDominantInheritanceStates() {
+	public final QuartetInheritanceState[] getDominantInheritanceStates() {
 		return dominantInheritanceStates;
 	}
 }

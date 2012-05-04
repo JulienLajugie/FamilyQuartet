@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-import dataStructures.InheritanceState;
+import dataStructures.InheritanceStateBlockListFactory;
+import dataStructures.QuartetInheritanceState;
 import dataStructures.InheritanceStateBlock;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.Variant;
@@ -71,8 +72,8 @@ public class ComputeErrorRateFromIdBlocks {
 	 * @throws IOException if the VCF file is not valid
 	 */
 	private static void computeErrorRateFromIdBlocks(File VCFFile, File blockFile) throws IOException {
-		InheritanceStateBlockList blockList = new InheritanceStateBlockList();
-		blockList.loadFromBgrFile(blockFile);		
+		InheritanceStateBlockList<QuartetInheritanceState> blockList;
+		blockList = InheritanceStateBlockListFactory.createFromQuartetBgrFile(blockFile);	
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
@@ -90,9 +91,9 @@ public class ComputeErrorRateFromIdBlocks {
 						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
 							throw new InvalidVCFLineException("Indel or Variant with more than one alt allele", line);
 						}
-						if ((blockList.getBlock(currentVariant) != null) && (blockList.getBlock(currentVariant).getBlockState() == InheritanceState.IDENTICAL)) {
+						if ((blockList.getBlock(currentVariant) != null) && (blockList.getBlock(currentVariant).getBlockState() == QuartetInheritanceState.IDENTICAL)) {
 							variantCount++;
-							if (currentVariant.getInheritanceStates()[0] == InheritanceState.MIE) {
+							if (currentVariant.getInheritanceStates()[0] == QuartetInheritanceState.MIE) {
 								if (!currentVariant.areChildrenIdentical()) {
 									System.out.println("MIE");
 								}
@@ -125,12 +126,12 @@ public class ComputeErrorRateFromIdBlocks {
 	 * @param blockList
 	 * @return the sum of the length of the identical blocks
 	 */
-	private static final long countIdenticalBlockLength(InheritanceStateBlockList blockList) {
-		Collection<List<InheritanceStateBlock>> blockListCollection = blockList.getBlocks().values();
+	private static final long countIdenticalBlockLength(InheritanceStateBlockList<QuartetInheritanceState> blockList) {
+		Collection<List<InheritanceStateBlock<QuartetInheritanceState>>> blockListCollection = blockList.getBlocks().values();
 		long identicalBlockLength = 0;
-		for (List<InheritanceStateBlock> currentList: blockListCollection) {
-			for (InheritanceStateBlock currentBlock: currentList) {
-				if (currentBlock.getBlockState() == InheritanceState.IDENTICAL) {
+		for (List<InheritanceStateBlock<QuartetInheritanceState>> currentList: blockListCollection) {
+			for (InheritanceStateBlock<QuartetInheritanceState> currentBlock: currentList) {
+				if (currentBlock.getBlockState() == QuartetInheritanceState.IDENTICAL) {
 					identicalBlockLength += (currentBlock.getStopPosition() - currentBlock.getStartPosition());
 				}
 			}
