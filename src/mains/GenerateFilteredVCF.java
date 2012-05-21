@@ -1,12 +1,12 @@
 package mains;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import dataStructures.QuartetInheritanceState;
+import dataStructures.SegmentalDuplicationList;
 import dataStructures.Variant;
-import exceptions.InvalidVCFLineException;
 import exceptions.VCFException;
 
 
@@ -15,21 +15,29 @@ import exceptions.VCFException;
  * @author Julien Lajugie
  */
 public class GenerateFilteredVCF {
-	
-	
+
+
 	/**
-	 * Usage: java GenerateFilteredVCF -f <path to the file>
-	 * @param args -f <path to the file>
+	 * Usage: java GenerateFilteredVCF -f <path to the file> -s <segmental duplication file (optional)>
+	 * @param args -f <path to the file> -s <segmental duplication file (optional)>
 	 */
 	public static void main(String[] args) {
 		// exit the program if the input parameters are not correct
-		if	((args.length != 2) ||
-				(!args[0].equals("-f"))) {
-			System.out.println("Usage: java GenerateFilteredVCF -f <path to the file>");
+		if (!areParametersValid(args)) { 
+			System.out.println("Usage: java GenerateFilteredVCF -f <path to the file> -s <segmental duplication file (optional)>");
 			System.exit(-1);
 		} else {
 			try {
-				generateFilteredVCF(args[1]);
+				File VCFFile = null;
+				File segDupFile = null;
+				for (int i = 0; i < args.length; i += 2) {
+					if (args[i].equals("-f")) {
+						VCFFile = new File(args[i + 1]);
+					} else if (args[i].equals("-s")) {			
+						segDupFile = new File(args[i + 1]);
+					}					
+				}
+				generateFilteredVCF(VCFFile, segDupFile);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -38,14 +46,38 @@ public class GenerateFilteredVCF {
 
 
 	/**
+	 * @param args parameters from the main function
+	 * @return true if the parameters are valid
+	 */
+	private static boolean areParametersValid(String[] args) {
+		if (args == null) {
+			return false;
+		}
+		if ((args.length != 2) && (args.length != 4)) {
+			return false;
+		}
+		if (args[0].equals("-f") || args[2].equals("-f")) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+
+	/**
 	 * Generates a filtered VCF file.  The filters must be defined in the Variant class.
-	 * @param VCFFilePath VCF files with the variants
+	 * @param VCFFile VCF files with the variants
+	 * @param segDupFile bed or bgr file containing the segmental duplication. Variants in these regions will be excluded.  Can be null
 	 * @throws IOException if the VCF file is not valid
 	 */
-	private static void generateFilteredVCF(String VCFFilePath) throws IOException {
+	private static void generateFilteredVCF(File VCFFile, File segDupFile) throws IOException {
+		SegmentalDuplicationList segDupList = null;
+		if (segDupFile != null) {
+			segDupList = new SegmentalDuplicationList(segDupFile);
+		}
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new FileReader(VCFFilePath));
+			reader = new BufferedReader(new FileReader(VCFFile));
 			String line = null;
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
@@ -55,19 +87,11 @@ public class GenerateFilteredVCF {
 				} else {
 					try {
 						Variant currentVariant = new Variant(line);
-						// we don't process variants with more than one alternative allele or indels
-						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
-							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than one alt allele.", line);
+						if ((segDupList != null) && !segDupList.isInSegmentalDuplication(currentVariant)) {
+							if (!currentVariant.isIndel()) {
+								System.out.println(line);
+							}
 						}
-						// we don't process variants that are not informative
-						/*if (currentVariant.getInheritanceStates()[0] == InheritanceState.NOT_INFORMATIVE) {
-							throw new InvalidVCFLineException("Invalid VCF line: not informative variant.", line);
-						}*/
-						// we don't process MIE variants
-						if (currentVariant.getInheritanceStates()[0] == QuartetInheritanceState.MIE) {	
-							throw new InvalidVCFLineException("Invalid VCF line: variant in MIE state.", line);
-						}
-						System.out.println(line);
 					} catch (VCFException e) {
 						// do nothing
 					}					

@@ -4,6 +4,7 @@ import dataStructures.QuartetInheritanceState;
 import exceptions.FilteredVCFLineException;
 import exceptions.InvalidVCFFieldException;
 import exceptions.InvalidVCFLineException;
+import exceptions.PartiallyCalledVariantException;
 import utils.PatternToInheritanceStates;
 
 /**
@@ -21,13 +22,13 @@ public class Variant {
 	 */
 	private static final boolean USE_INDIVIDUALS_SCORE_FILTERING = false;
 	/**
-	 * Filter using the min of the individual PL fields
+	 * Value of the PL filter. Set to null to disable
 	 */
-	private static final boolean USE_INDIVIDUALS_PL_FILTERING = true;
+	private static final Integer INDIVIDUALS_PL_MIN_VALUE = 20;
 	/**
 	 * Filter removing all the variant with the filter field different from "PASS"
 	 */
-	private static final boolean USE_FILTER_FIELD_FILTERING = true;
+	private static final VCFFilterField FILTER_FIELD_FILTERING = VCFFilterField.PASS;
 	/**
 	 * Filter excluding the fully heterozygous genotypes
 	 */
@@ -43,12 +44,13 @@ public class Variant {
 	/**
 	 * Filters out MIE variants if set to true
 	 */
-	private static final boolean USE_MIE_FILTERING = true;
+	private static final boolean USE_MIE_FILTERING = false;
 
 	private final String 					chromosome;					// chromosome of the variant		
 	private final int 						position;					// position of the variant
 	private final String 					referenceAllele;			// reference allele of the variant
 	private final String 					alternatievAllele;			// alternative allele of the variant
+	private final boolean					isIndel;					// true if the variant is an indel
 	private final AlleleType[] 				fatherAlleles;				// alleles of the father
 	private final AlleleType[] 				motherAlleles;				// alleles of the mother
 	private final AlleleType[] 				kid1Alleles;				// alleles of the 1st kid
@@ -68,14 +70,14 @@ public class Variant {
 	 * @throws InvalidVCFLineException when the VCF line is not valid
 	 * @throws FilteredVCFLineException 
 	 * @throws InvalidVCFFieldException 
+	 * @throws PartiallyCalledVariantException 
 	 */
 	@SuppressWarnings("unused")
-	public Variant(String VCFLine) throws InvalidVCFLineException, FilteredVCFLineException, InvalidVCFFieldException {
+	public Variant(String VCFLine) throws InvalidVCFLineException, FilteredVCFLineException, InvalidVCFFieldException, PartiallyCalledVariantException {
 		String[] splitLine = VCFLine.split("\t"); // VCF fields are tab delimited
 		// filter using the filter field
-		if (USE_FILTER_FIELD_FILTERING) {
-			filterFieldFiltering(splitLine[6].trim());
-		}
+		filterFieldFiltering(splitLine[6].trim());
+
 		// filter using the GATK hard filtering recommendation from the best practice V3
 		if (USE_GATK_HARD_FILTERING) {
 			GATKFilter(splitLine[7].trim());
@@ -85,6 +87,7 @@ public class Variant {
 		position = Integer.parseInt(splitLine[1].trim());
 		referenceAllele = splitLine[3].trim();
 		alternatievAllele = splitLine[4].trim();
+		isIndel = isIndel(referenceAllele, alternatievAllele);
 		// filter using the some of the individual quality scores
 		if (USE_INDIVIDUALS_SCORE_FILTERING) {
 			double score = stringToQualityScore(splitLine[9].trim());
@@ -96,12 +99,11 @@ public class Variant {
 			}
 		}
 		// Filter using the min of the individual PL fields
-		if (USE_INDIVIDUALS_PL_FILTERING) {
+		if (INDIVIDUALS_PL_MIN_VALUE != null) {
 			int plScore = Math.min(genotypeFieldToPL(splitLine[9].trim()), genotypeFieldToPL(splitLine[10].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[11].trim()));
 			plScore = Math.min(plScore, genotypeFieldToPL(splitLine[12].trim()));
-			if (plScore < 20) {
-				//if (plScore < 30) {
+			if (plScore < INDIVIDUALS_PL_MIN_VALUE) {
 				throw new FilteredVCFLineException("PL", Integer.toString(plScore));
 			}
 		}
@@ -211,9 +213,17 @@ public class Variant {
 	 * @throws FilteredVCFLineException
 	 */
 	private void filterFieldFiltering(String filterField) throws FilteredVCFLineException {
-		if ((!filterField.equalsIgnoreCase("PASS"))) {
-			// && (!filterField.equalsIgnoreCase("TruthSensitivityTranche99.00to99.90"))) {
-			throw new FilteredVCFLineException("Filter Field", filterField); 
+		switch (FILTER_FIELD_FILTERING) {
+		case NINETY_NINE_POINT_NINE:
+			if (!filterField.equalsIgnoreCase("PASS") && !filterField.equalsIgnoreCase("TruthSensitivityTranche99.00to99.90")) {
+				throw new FilteredVCFLineException("Filter Field", filterField);
+			}
+			break;
+		case PASS:
+			if (!filterField.equalsIgnoreCase("PASS")) {
+				throw new FilteredVCFLineException("Filter Field", filterField);	
+			}
+			break;
 		}
 	}
 
@@ -285,8 +295,9 @@ public class Variant {
 	 * @param genotypeInfo genotype information field of a VCF line
 	 * @return the allele types of a sample
 	 * @throws InvalidVCFFieldException
+	 * @throws PartiallyCalledVariantException 
 	 */
-	private AlleleType[] stringToAlleleTypes(String genotypeInfo) throws InvalidVCFFieldException {
+	private AlleleType[] stringToAlleleTypes(String genotypeInfo) throws InvalidVCFFieldException, PartiallyCalledVariantException {
 		AlleleType[] resultAlleles = new AlleleType[2];
 		String[] splitGenotypeInfo = genotypeInfo.split(":"); // the genotype info field is colon-separated
 		String genotype = splitGenotypeInfo[0];	// the genotype is in the first field
@@ -295,6 +306,8 @@ public class Variant {
 			resultAlleles[0] = AlleleType.REFERENCE_ALLELE;
 		} else if (genotype.charAt(0) == '1') {
 			resultAlleles[0] = AlleleType.ALTERNATIVE_ALLELE;
+		} else if (genotype.charAt(0) == '.') {
+			throw new PartiallyCalledVariantException(genotypeInfo);
 		} else {
 			throw new InvalidVCFFieldException("Invalid VCF field: the first allele value must be 0 or 1", "Genotype Field", genotypeInfo);
 		}
@@ -302,6 +315,8 @@ public class Variant {
 			resultAlleles[1] = AlleleType.REFERENCE_ALLELE;
 		} else if (genotype.charAt(2) == '1') {
 			resultAlleles[1] = AlleleType.ALTERNATIVE_ALLELE;
+		} else if (genotype.charAt(0) == '.') {
+			throw new PartiallyCalledVariantException(genotypeInfo);
 		} else {
 			throw new InvalidVCFFieldException("Invalid VCF field: the second allele value must be 0 or 1", "Genotype Field", genotypeInfo);
 		}
@@ -445,7 +460,25 @@ public class Variant {
 		return fatherPattern + "+" + motherPattern;		
 	}
 
-
+	
+	/**
+	 * @param allele an {@link AlleleType}
+	 * @return the number of allele having the specified {@link AlleleType} in the quartet
+	 */
+	public final int getAlleleCount(AlleleType allele) {
+		int alleleCount = 0;
+		alleleCount = getAlleles(QuartetMember.FATHER)[0] == allele ? alleleCount + 1 : alleleCount;
+		alleleCount = getAlleles(QuartetMember.FATHER)[1] == allele ? alleleCount + 1 : alleleCount;
+		alleleCount = getAlleles(QuartetMember.MOTHER)[0] == allele ? alleleCount + 1 : alleleCount;
+		alleleCount = getAlleles(QuartetMember.MOTHER)[1] == allele ? alleleCount + 1 : alleleCount;
+		alleleCount = getAlleles(QuartetMember.KID1)[0] == allele ? alleleCount + 1 : alleleCount;
+		alleleCount = getAlleles(QuartetMember.KID1)[1] == allele ? alleleCount + 1 : alleleCount;
+		alleleCount = getAlleles(QuartetMember.KID2)[0] == allele ? alleleCount + 1 : alleleCount;
+		alleleCount = getAlleles(QuartetMember.KID2)[1] == allele ? alleleCount + 1 : alleleCount;		
+		return alleleCount;
+	}
+	
+	
 	/**
 	 * @return the chromosome of the variant
 	 */
@@ -533,8 +566,8 @@ public class Variant {
 			return null;
 		}
 	}
-	
-	
+
+
 	/**
 	 * Phase the specified quartet member
 	 * @param member a quarte member
@@ -565,8 +598,8 @@ public class Variant {
 			break;
 		}		
 	}
-	
-	
+
+
 	/**
 	 * @return a string with the different field names of a variant
 	 */
@@ -721,12 +754,19 @@ public class Variant {
 	 * @return true if the children are identical, false otherwise
 	 */
 	public boolean areChildrenIdentical() {
-		if (((kid1Alleles[0] == kid2Alleles[0]) && (kid1Alleles[1] == kid2Alleles[1])) 
-				|| ((kid1Alleles[0]) == kid2Alleles[1]) && (kid1Alleles[1] == kid2Alleles[0])) {
-			return true;
+		// case where boths kids are phased
+		if (isKid1Phased && isKid2Phased) {
+			if ((kid1Alleles[0] == kid2Alleles[0]) && (kid1Alleles[1] == kid2Alleles[1])) {
+				return true;
+			}
 		} else {
-			return false;
+			// case where at least one kid is not phased
+			if (((kid1Alleles[0] == kid2Alleles[0]) && (kid1Alleles[1] == kid2Alleles[1])) 
+					|| ((kid1Alleles[0]) == kid2Alleles[1]) && (kid1Alleles[1] == kid2Alleles[0])) {
+				return true;
+			}
 		}
+		return false;
 	}
 
 
@@ -753,5 +793,36 @@ public class Variant {
 			}
 		}
 		return false;
+	}
+
+
+	/**
+	 * @param referenceAllele reference allele of the variant
+	 * @param alternatievAllele alternative allele of the variant
+	 * @return true if the variant is an indel, false otherwise
+	 */
+	private boolean isIndel(String referenceAllele, String alternatievAllele) {
+		String[] splitReferenceAllele = referenceAllele.split(",");
+		String[] splitAlternativeAllele = alternatievAllele.split(",");
+		boolean isIndel = false;
+		int i = 0;
+		while (!isIndel && i < splitReferenceAllele.length) {
+			isIndel = splitReferenceAllele[i].trim().length() > 1;
+			i++;
+		}
+		i = 0;
+		while (!isIndel && i < splitAlternativeAllele.length) {
+			isIndel = splitAlternativeAllele[i].trim().length() > 1;
+			i++;
+		}
+		return isIndel;
+	}
+
+
+	/**
+	 * @return the true if the variant is an indel
+	 */
+	public boolean isIndel() {
+		return isIndel;
 	}
 }

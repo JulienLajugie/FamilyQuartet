@@ -10,6 +10,7 @@ import dataStructures.Variant;
 import exceptions.FilteredVCFLineException;
 import exceptions.InvalidVCFFieldException;
 import exceptions.InvalidVCFLineException;
+import exceptions.PartiallyCalledVariantException;
 
 
 
@@ -102,7 +103,7 @@ public class GenerateCrossoverBgrFromMergedTriosVCF {
 							}
 							System.out.println(variant.getChromosome() + '\t' + variant.getPosition() + '\t' + (variant.getPosition() + 1) + '\t' + score);
 						}
-					} catch (InvalidVCFLineException | FilteredVCFLineException | InvalidVCFFieldException e) {
+					} catch (InvalidVCFLineException | FilteredVCFLineException | InvalidVCFFieldException | PartiallyCalledVariantException e) {
 						// do nothing
 					}
 				}

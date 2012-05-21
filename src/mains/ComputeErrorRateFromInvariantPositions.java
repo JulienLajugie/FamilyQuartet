@@ -5,36 +5,34 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import dataStructures.AlleleType;
 import dataStructures.CrossTriosInheritanceState;
-import dataStructures.InheritanceStateBlock;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.InheritanceStateBlockListFactory;
 import dataStructures.SegmentalDuplicationList;
 import dataStructures.Variant;
-import exceptions.PartiallyCalledVariantException;
 import exceptions.VCFException;
 
 
-
 /**
- * Generates statistics about the blocks of inheritance states (eg: count of MIE / SCE / not informative states per block)
- * "Analysis of Genetic Inheritance in a Family Quartet by Whole-Genome Sequencing", Roach et Al
+ * Computes the error rate by computing the errors positions that should be invariant aa/aa;aa/aa
  * @author Julien Lajugie
  */
-public class GenerateBlockStats {
+public class ComputeErrorRateFromInvariantPositions {
 
+	private static final long GENOME_LENGTH = 2897310462l; // length of hg19 genome (without N's)
 
 	/**
-	 * Usage: java GenerateBlockStats -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>
+	 * Usage: java ComputeErrorRateFromInvariantPositions.java -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>
 	 * @param args -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>
 	 */
 	public static void main(String[] args) {
 		// exit the program if the input parameters are not correct
 		if (!areParametersValid(args)) { 
-			System.out.println("Usage: java GenerateBlockStats -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>");
+			System.out.println("Usage: java ComputeErrorRateFromInvariantPositions.java -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>");
 			System.exit(-1);
 		} else {
-			try {
+			try {				
 				File VCFFile = null;
 				File blockFile = null;
 				File segDupFile = null;
@@ -47,7 +45,7 @@ public class GenerateBlockStats {
 						segDupFile = new File(args[i + 1]);
 					}					
 				}
-				generateBlockStats(VCFFile, blockFile, segDupFile);
+				computeErrorRateFromInvariantPositions(VCFFile, blockFile, segDupFile);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -76,26 +74,28 @@ public class GenerateBlockStats {
 
 
 	/**
-	 * Generates statistics about the blocks of inheritance states (eg: count of MIE / SCE / not informative states per block)
+	 * Computes the error rate by computing the errors positions that should be invariant aa/aa;aa/aa
 	 * @param VCFFile VCF files with the variants of the family quartet
 	 * @param blockFile block files from the ISCA software (Roach et Al)
-	 * @param segDupFile bed or bgr file containing the segmental duplication. Variants in these regions will be excluded.  Can be null 
+	 * @param segDupFile bed or bgr file containing the segmental duplication. Variants in these regions will be excluded.  Can be null
 	 * @throws IOException if the VCF file is not valid
 	 */
-	private static void generateBlockStats(File VCFFile, File blockFile, File segDupFile) throws IOException {
+	private static void computeErrorRateFromInvariantPositions(File VCFFile, File blockFile, File segDupFile) throws IOException {
 		InheritanceStateBlockList<CrossTriosInheritanceState> blockList;
 		blockList = InheritanceStateBlockListFactory.createFromCrossTriosBgrFile(blockFile);
 		SegmentalDuplicationList segDupList = null;
 		if (segDupFile != null) {
 			segDupList = new SegmentalDuplicationList(segDupFile);
 		}
-		int variantCount = 0;
-		int indelCount = 0;
-		int partiallyCalledVariantCount = 0;
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
 			String line = null;
+			int variantCount = 0;
+			int itemCount = 0;
+			int errorCount = 0;
+			int MIEErrorCount = 0;
+			int SCEErrorCount = 0;
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
@@ -103,29 +103,29 @@ public class GenerateBlockStats {
 					try {
 						Variant currentVariant = new Variant(line);
 						if (segDupList == null || !segDupList.isInSegmentalDuplication(currentVariant)) {
-							//if (!currentVariant.isIndel()) {
+							if (!currentVariant.isIndel()) {
 								variantCount++;
-								if (currentVariant.isIndel()) {
-									indelCount++;
+								if ((currentVariant.getAlleleCount(AlleleType.REFERENCE_ALLELE) == 7) || (currentVariant.getAlleleCount(AlleleType.ALTERNATIVE_ALLELE) == 7)) {
+									itemCount++;
+									if (currentVariant.isMIE()) {
+										MIEErrorCount++;
+									} else if ((blockList.getBlock(currentVariant) != null) && (blockList.getBlock(currentVariant).isSCE(currentVariant))) {
+										SCEErrorCount++;
+									}
 								}
-								InheritanceStateBlock<CrossTriosInheritanceState> currentVariantBlock = blockList.getBlock(currentVariant);
-								if (currentVariantBlock != null) {
-									currentVariantBlock.analyzeVariant(currentVariant);
-								}
-							//}
+							}
 						}
-						//System.out.println(line);
-					} catch (PartiallyCalledVariantException e) {
-						// we still count partially called variants 
-						variantCount++;
-						partiallyCalledVariantCount++;
 					} catch (VCFException e) {
 						// do nothing
-					}					
+					}				
 				}
-			}	
-			System.out.println("Variant #: " + variantCount + ", Partially Called Variant #: " + partiallyCalledVariantCount + ", SNP #: " + (variantCount - indelCount - partiallyCalledVariantCount) + ", Indel #: " + indelCount);
-			blockList.printGenomeWideStatistics();
+			}
+			errorCount = MIEErrorCount + SCEErrorCount;
+			long invariantPositionCount = GENOME_LENGTH - variantCount + errorCount;
+			System.out.println("Variant Count=" + itemCount + ", Error Count=" + errorCount + ", Error Rate=" + (errorCount / (double) itemCount * 100d) + '%');
+			System.out.println("MIE Error Count=" + MIEErrorCount + ", MIE Error %=" + (MIEErrorCount / (double) errorCount * 100d) + '%');
+			System.out.println("SCE Error Count=" + SCEErrorCount + ", SCE Error %=" + (SCEErrorCount / (double) errorCount * 100d) + '%');
+			System.out.println("Invariant Position Count=" + invariantPositionCount + ", Identical Blocks Error Rate=" + (errorCount / (double) invariantPositionCount));
 		} finally {
 			if (reader != null) {
 				reader.close();

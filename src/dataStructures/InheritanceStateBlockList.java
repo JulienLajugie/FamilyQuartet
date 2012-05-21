@@ -84,6 +84,39 @@ public class InheritanceStateBlockList<T extends InheritanceState> {
 		genomeWideStats += NICount / (double) variantCount * 100d +"\t";
 		System.out.println(genomeWideStats);		
 	}
+	
+
+	/**
+	 * Prints the genome wide statistics only
+	 */
+	public void printGenomeWideStatistics() {
+		int variantCount = 0;
+		int MIECount = 0;
+		int SCECount = 0;
+		int NICount = 0;
+		System.out.println(InheritanceStateBlock.STAT_HEADER);
+		for (List<InheritanceStateBlock<T>> currentList: ISBlockMap.values()) {
+			for (InheritanceStateBlock<T> currentBlock: currentList) {
+				variantCount += currentBlock.getVariantCount();
+				MIECount += currentBlock.getMIECount();
+				SCECount += currentBlock.getSCECount();
+				NICount += currentBlock.getNICount();				
+			}
+		}
+		// print the genome wide stats
+		String genomeWideStats = "GW\t";
+		genomeWideStats += "GW\t";
+		genomeWideStats += "GW\t";
+		genomeWideStats += "NA\t";
+		genomeWideStats += variantCount +"\t";
+		genomeWideStats += MIECount +"\t";
+		genomeWideStats += MIECount / (double) variantCount * 100d +"\t";
+		genomeWideStats += SCECount +"\t";
+		genomeWideStats += SCECount / (double) variantCount * 100d +"\t";
+		genomeWideStats += NICount +"\t";
+		genomeWideStats += NICount / (double) variantCount * 100d +"\t";
+		System.out.println(genomeWideStats);				
+	}
 
 
 	/**

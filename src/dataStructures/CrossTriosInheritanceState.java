@@ -48,6 +48,12 @@ public class CrossTriosInheritanceState implements InheritanceState {
 	public String getName() {
 		return paternalTrioState.getName() + " Paternal, " + maternalTrioState.getName() + " Maternal";
 	}
+	
+	
+	@Override
+	public String toString() {
+		return this.getName();
+	}
 
 
 	@Override
