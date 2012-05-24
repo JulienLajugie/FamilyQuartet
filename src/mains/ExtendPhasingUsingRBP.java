@@ -20,6 +20,7 @@ public class ExtendPhasingUsingRBP {
 
 	private final static String[] CHROMOSOMES = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10",	"chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"};
 	//private final static String[] CHROMOSOMES = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7"};
+	//private final static String[] CHROMOSOMES = {"chr1"};
 	private final static QuartetMember[] MEMBERS = {QuartetMember.MOTHER};
 	//private final static QuartetMember[] MEMBERS = QuartetMember.values();
 	
@@ -101,8 +102,8 @@ public class ExtendPhasingUsingRBP {
 	 * @param physicalVectorList
 	 */
 	private static void mergeVectors(PhasedVectorList geneticVectorList, PhasedVectorList physicalVectorList) {
-		int validInsertCount = 0;
-		int phasedVariantCount = 0;
+		//int validInsertCount = 0;
+		//int phasedVariantCount = 0;
 		// we analyze each chromosome defined in the CHROMOSOME constant
 		for (String chromosome: CHROMOSOMES) {
 			List<PhasedVector> geneticVectors = geneticVectorList.getPhasedVectorList(chromosome);

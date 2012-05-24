@@ -27,8 +27,6 @@ public class PhasedGenotypesSeries {
 
 	private final List<String> genotypes; 	// list containing the genotype vectors (each element is the concatenation of the 2 genotypes to compare)
 	private final List<Integer> positions;	// list containing the positions associated to the genotypes
-	private String lastGenotypes;			// value of the last genotype vectors not added (because they were not phased) 
-	private int lastPosition;				// position of the value of the last genotype not added
 	private String chromosome;				// chromosome of the series
 	private boolean isAnalyzed;				// true if the genotypes list has been analyzed
 	private int compatibleGenotypes;		// count of compatible genotype vectors
@@ -45,7 +43,6 @@ public class PhasedGenotypesSeries {
 		compatibleGenotypes = 0;
 		incompatibleGenotypes = 0;
 		isAnalyzed = false;
-		lastGenotypes = null;
 		chromosome = null;
 	}
 
@@ -68,19 +65,11 @@ public class PhasedGenotypesSeries {
 		}
 		// we just want to study heterozygous genotypes
 		if (genotype1.charAt(0) == genotype1.charAt(2)) {
-			lastGenotypes = null;
 			return NOTHING_TO_ADD;
 		}
 		// case where at least one of the genotype is not phased
 		if ((genotype1.charAt(1) != '|') || (genotype2.charAt(1) != '|')) {
-			lastGenotypes = genotype1 + genotype2;
-			lastPosition = position;
 			return SERIES_FINISHED;
-		}
-		// case where both genotypes are phased
-		if ((genotypes.size() == 0) && (lastGenotypes != null)) {
-			//	genotypes.add(lastGenotypes);
-			//	positions.add(lastPosition);
 		}
 		genotypes.add(genotype1 + genotype2);
 		positions.add(position);
@@ -105,19 +94,24 @@ public class PhasedGenotypesSeries {
 	 * Computes the number of elements with a compatible phasing and the number of element with an incompatible phasing 
 	 */
 	private void analyzeGenotypes() {
-		//if (genotypes.size() > 1) {
+		if (genotypes.size() > 1) {
 			int compatibleGenotypesTmp = 0;
 			int incompatibleGenotypesTmp = 0;
+			int homozygousVectorsCount = 0;
 			for (String currentGenotype: genotypes) {
-				if((currentGenotype.charAt(0) == currentGenotype.charAt(3)) && (currentGenotype.charAt(2) == currentGenotype.charAt(5))) {
-					compatibleGenotypesTmp++;
+				if (currentGenotype.charAt(0) == currentGenotype.charAt(2)) {
+					homozygousVectorsCount++;
 				} else {
-					incompatibleGenotypesTmp++;
+					if((currentGenotype.charAt(0) == currentGenotype.charAt(3)) && (currentGenotype.charAt(2) == currentGenotype.charAt(5))) {
+						compatibleGenotypesTmp++;
+					} else {
+						incompatibleGenotypesTmp++;
+					}
 				}
 			}
-			compatibleGenotypes = Math.max(compatibleGenotypesTmp, incompatibleGenotypesTmp);
+			compatibleGenotypes = Math.max(compatibleGenotypesTmp, incompatibleGenotypesTmp) + homozygousVectorsCount;
 			incompatibleGenotypes = Math.min(compatibleGenotypesTmp, incompatibleGenotypesTmp);
-		//}
+		}
 		isAnalyzed = true;
 	}
 
@@ -133,32 +127,32 @@ public class PhasedGenotypesSeries {
 		}
 		List<Integer> compatibleList = new ArrayList<Integer>();
 		List<Integer> incompatibleList = new ArrayList<Integer>();
-//		if (genotypes.size() > 1) {
-			for (int i = 0; i < genotypes.size(); i++) {
-				String currentGenotype = genotypes.get(i);
-				Integer currentPosition = positions.get(i);
-				if((currentGenotype.charAt(0) == currentGenotype.charAt(3)) && (currentGenotype.charAt(2) == currentGenotype.charAt(5))) {
-					compatibleList.add(currentPosition);
-				} else {
-					incompatibleList.add(currentPosition);
-				}
+		//		if (genotypes.size() > 1) {
+		for (int i = 0; i < genotypes.size(); i++) {
+			String currentGenotype = genotypes.get(i);
+			Integer currentPosition = positions.get(i);
+			if((currentGenotype.charAt(0) == currentGenotype.charAt(3)) && (currentGenotype.charAt(2) == currentGenotype.charAt(5))) {
+				compatibleList.add(currentPosition);
+			} else {
+				incompatibleList.add(currentPosition);
 			}
-//			for (Integer currentPosition: positions) {
-//				if (((compatibleList.contains(currentPosition)) && (compatibleList.size() >= incompatibleList.size())) ||
-//						((incompatibleList.contains(currentPosition)) && (incompatibleList.size() > compatibleList.size()))) {
-//					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
-//				} else {
-//					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
-//				}
-//			}
-			for (Integer currentPosition: positions) {
-				if (compatibleList.contains(currentPosition)) {
-					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
-				} else if (incompatibleList.contains(currentPosition)){
-					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
-				}
+		}
+		//			for (Integer currentPosition: positions) {
+		//				if (((compatibleList.contains(currentPosition)) && (compatibleList.size() >= incompatibleList.size())) ||
+		//						((incompatibleList.contains(currentPosition)) && (incompatibleList.size() > compatibleList.size()))) {
+		//					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
+		//				} else {
+		//					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
+		//				}
+		//			}
+		for (Integer currentPosition: positions) {
+			if (compatibleList.contains(currentPosition)) {
+				System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
+			} else if (incompatibleList.contains(currentPosition)){
+				System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
 			}
-//		}
+		}
+		//		}
 	}
 
 

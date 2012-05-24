@@ -44,7 +44,7 @@ public class Variant {
 	/**
 	 * Filters out MIE variants if set to true
 	 */
-	private static final boolean USE_MIE_FILTERING = false;
+	private static final boolean USE_MIE_FILTERING = true;
 
 	private final String 					chromosome;					// chromosome of the variant		
 	private final int 						position;					// position of the variant

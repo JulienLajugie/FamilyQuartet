@@ -278,6 +278,33 @@ public class PhasedVector implements Comparable<PhasedVector> {
 			return null;
 		}		
 	}
+	
+	
+	/**
+	 * Set the phasing of the specified family member to the specified value 
+	 * @param quartetMember a quartet member
+	 * @param isPhased true if the member is phased, false otherwise
+	 */
+	public void setPhasing(QuartetMember quartetMember, boolean isPhased) {
+		int bitPosition = -1;
+		switch (quartetMember) {
+		case FATHER:
+			bitPosition = 3;
+			break;
+		case MOTHER:
+			bitPosition = 5;
+			break;
+		case KID1:
+			bitPosition = 8;
+			break;
+		case KID2:
+			bitPosition = 11;
+			break;
+		}
+		if (bitPosition != -1) {
+			setBit(bitPosition, isPhased);
+		}		
+	}
 
 
 	@Override
