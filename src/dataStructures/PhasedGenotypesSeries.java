@@ -29,6 +29,8 @@ public class PhasedGenotypesSeries {
 	private final List<Integer> positions;	// list containing the positions associated to the genotypes
 	private String chromosome;				// chromosome of the series
 	private boolean isAnalyzed;				// true if the genotypes list has been analyzed
+	private Integer firstPosition = null;	// position of the first element of a series
+	private String firstGenotype= null;		// genotype of the first element of a series 
 	private int compatibleGenotypes;		// count of compatible genotype vectors
 	private int incompatibleGenotypes;		// count of incompatible genotype vectors
 
@@ -69,7 +71,15 @@ public class PhasedGenotypesSeries {
 		}
 		// case where at least one of the genotype is not phased
 		if ((genotype1.charAt(1) != '|') || (genotype2.charAt(1) != '|')) {
+			firstPosition = position;
+			firstGenotype = (genotype1 + genotype2);
 			return SERIES_FINISHED;
+		}
+		if (firstPosition != null) {
+			genotypes.add(firstGenotype);
+			positions.add(firstPosition);
+			firstPosition = null;
+			firstGenotype = null;
 		}
 		genotypes.add(genotype1 + genotype2);
 		positions.add(position);
@@ -87,6 +97,8 @@ public class PhasedGenotypesSeries {
 		genotypes.clear();
 		positions.clear();
 		chromosome = null;
+		firstPosition = null;
+		firstGenotype = null;
 	}
 
 
@@ -127,32 +139,31 @@ public class PhasedGenotypesSeries {
 		}
 		List<Integer> compatibleList = new ArrayList<Integer>();
 		List<Integer> incompatibleList = new ArrayList<Integer>();
-		//		if (genotypes.size() > 1) {
-		for (int i = 0; i < genotypes.size(); i++) {
-			String currentGenotype = genotypes.get(i);
-			Integer currentPosition = positions.get(i);
-			if((currentGenotype.charAt(0) == currentGenotype.charAt(3)) && (currentGenotype.charAt(2) == currentGenotype.charAt(5))) {
-				compatibleList.add(currentPosition);
-			} else {
-				incompatibleList.add(currentPosition);
+		if (genotypes.size() > 1) {
+			for (int i = 0; i < genotypes.size(); i++) {
+				String currentGenotype = genotypes.get(i);
+				Integer currentPosition = positions.get(i);
+				if((currentGenotype.charAt(0) == currentGenotype.charAt(3)) && (currentGenotype.charAt(2) == currentGenotype.charAt(5))) {
+					compatibleList.add(currentPosition);
+				} else {
+					incompatibleList.add(currentPosition);
+				}
+			}
+			// if there are more incompatible than compatible vectors we invert the lists
+			if (incompatibleList.size() > compatibleList.size()) {
+				List<Integer> listTmp = compatibleList;
+				compatibleList = incompatibleList;
+				incompatibleList = listTmp;
+			}
+			// print on the bedgraph format with a score of 1 for compatible vector or -1 for incompatible
+			for (Integer currentPosition: positions) {
+				if (compatibleList.contains(currentPosition)) {
+					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
+				} else {
+					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
+				}
 			}
 		}
-		//			for (Integer currentPosition: positions) {
-		//				if (((compatibleList.contains(currentPosition)) && (compatibleList.size() >= incompatibleList.size())) ||
-		//						((incompatibleList.contains(currentPosition)) && (incompatibleList.size() > compatibleList.size()))) {
-		//					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
-		//				} else {
-		//					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
-		//				}
-		//			}
-		for (Integer currentPosition: positions) {
-			if (compatibleList.contains(currentPosition)) {
-				System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
-			} else if (incompatibleList.contains(currentPosition)){
-				System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
-			}
-		}
-		//		}
 	}
 
 

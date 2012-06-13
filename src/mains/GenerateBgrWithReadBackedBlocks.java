@@ -5,35 +5,43 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import dataStructures.QuartetMember;
+import dataStructures.Variant;
+import exceptions.VCFException;
+
 
 /**
  * Generates a bedgraph file with the blocks from the read backed phasing VCF
  * @author Julien Lajugie
  */
 public class GenerateBgrWithReadBackedBlocks {
-		
-	private static final int GENERATE_FATHER_BLOCKS = 0;
-	@SuppressWarnings("unused")
-	private static final int GENERATE_MOTHER_BLOCKS = 1;
-	@SuppressWarnings("unused")
-	private static final int GENERATE_KID1_BLOCKS = 2;
-	@SuppressWarnings("unused")
-	private static final int GENERATE_KID2_BLOCKS = 3;
-	private static final int SELECTED_SAMPLE = GENERATE_FATHER_BLOCKS;
 
 	/**
-	 * Usage: java GenerateBgrWithReadBackedBlocks -v <path to the vcf file>
-	 * @param args -v <path to the vcf file>
+	 * Usage: java GenerateBgrWithReadBackedBlocks.java -v <path to the vcf file> -m <quartet member (FATHER, MOTHER, KID1 or KID2)>
+	 * @param args -v <path to the vcf file> -m <quartet member (FATHER, MOTHER, KID1 or KID2)>
 	 */
 	public static void main(String[] args) {
 		// exit the program if the input parameters are not correct
 		if (!areParametersValid(args)) { 
-			System.out.println("Usage: java GenerateBgrWithReadBackedBlocks -v <path to the vcf file>");
+			System.out.println("java GenerateBgrWithReadBackedBlocks.java -v <path to the vcf file> -m <quartet member (FATHER, MOTHER, KID1 or KID2)>");
 			System.exit(-1);
 		} else {
-			File vcfFile = new File(args[1]);
+			QuartetMember member = null;
+			File vcfFile = null;
+			for (int i = 0; i < args.length; i += 2) {
+				if (args[i].equals("-m")) {
+					member = QuartetMember.valueOf(args[i + 1]);
+					if (member == null) {
+						System.out.println("Usage: java GenerateBgrWithReadBackedBlocks.java -v <path to the vcf file> -m <quartet member (FATHER, MOTHER, KID1 or KID2)>");
+						System.exit(-1);						
+					}
+				}
+				if (args[i].equals("-v")) {
+					vcfFile = new File(args[i + 1]);
+				}
+			}
 			try {
-				generateBgrWithReadBackedBlocks(vcfFile);
+				generateBgrWithReadBackedBlocks(vcfFile, member);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -49,11 +57,15 @@ public class GenerateBgrWithReadBackedBlocks {
 		if (args == null) {
 			return false;
 		}
-		if (args.length != 2) {
+		if (args.length != 4) {
 			return false;
 		}
 		// case with no -v parameter
-		if (!args[0].equals("-v")) {
+		if (!args[0].equals("-v") && !args[2].equals("-v")) {
+			return false;
+		}
+		// case with no -m parameter
+		if (!args[0].equals("-m") && !args[2].equals("-m")) {
 			return false;
 		}
 		return true;
@@ -62,36 +74,42 @@ public class GenerateBgrWithReadBackedBlocks {
 
 	/**
 	 * Generates a bedgraph file with the blocks from the read backed phasing VCF
-	 * @param vcfFile
+	 * @param vcfFile input phased VCF file
+	 * @param member member of the quartet 
 	 */
-	private static void generateBgrWithReadBackedBlocks(File vcfFile) throws IOException {
+	private static void generateBgrWithReadBackedBlocks(File vcfFile, QuartetMember member) throws IOException {
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(vcfFile));
 			String line = null;
 			// loop until eof
-			int startPositionTmp = -1;
 			int startPosition = 0;
-			int stopPosition = -1;
+			int stopPosition = 0;
+			String chromosome = null;
+			boolean isBlockFirstVariant = true;			
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
 				if (line.charAt(0) != '#') {
-					String[] splitLine = line.split("\t");
-					String chromosome = splitLine[0].trim();
-					int position = Integer.parseInt(splitLine[1].trim());
-					String genotype = splitLine[SELECTED_SAMPLE + 9].trim().split(":")[0];
-					if (genotype.charAt(1) == '|') {
-						stopPosition = position;
-						if (startPositionTmp != -1) {
-							startPosition = startPositionTmp;
-							startPositionTmp = -1;
+					Variant currentVariant;
+					try {
+						currentVariant = new Variant(line);						
+						// case where the variant is not phased or is on a new chromosome (meaning that the previous block ended)
+						if ((!currentVariant.isPhased(member)) || (!currentVariant.getChromosome().equals(chromosome))) {
+							// case where the previous block is not empty
+							if (!isBlockFirstVariant) {
+								System.out.println(chromosome + '\t' + startPosition + '\t' + (stopPosition + 1) +"\t1");
+								isBlockFirstVariant = true;
+							}
+							chromosome = currentVariant.getChromosome();
+							startPosition = currentVariant.getPosition();
 						}
-					} else if (genotype.charAt(1) == '/') {
-						startPositionTmp = position;
-						if (stopPosition != -1) {
-							System.out.println(chromosome + '\t' + startPosition + '\t' + stopPosition +"\t1");
-							stopPosition = -1;
-						}
+						// case where the variant is phased with the previsous one
+						if ((currentVariant.isPhased(member)) && (currentVariant.isHeterozygous(member))) {
+							isBlockFirstVariant = false;
+							stopPosition = currentVariant.getPosition();
+						} 
+					} catch (VCFException e) {
+						// do nothing
 					}
 				}
 			}

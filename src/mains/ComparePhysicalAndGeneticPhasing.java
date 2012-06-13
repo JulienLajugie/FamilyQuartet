@@ -61,7 +61,7 @@ public class ComparePhysicalAndGeneticPhasing {
 			return false;
 		}
 		// case with no -p parameter
-		if (!args[0].equals("-") && !args[2].equals("-p")) {
+		if (!args[0].equals("-p") && !args[2].equals("-p")) {
 			return false;
 		}
 		return true;

@@ -141,7 +141,7 @@ public class InheritanceStateBlockList<T extends InheritanceState> {
 	
 	
 	/**
-	 * @return the inheritant state blocks organized in a map sorted per chromosome
+	 * @return the inheritance state blocks organized in a map sorted per chromosome
 	 */
 	public final Map<String, List<InheritanceStateBlock<T>>> getBlocks() {
 		return ISBlockMap;

@@ -99,4 +99,12 @@ public class SegmentalDuplicationList {
 		}
 		return null;
 	}
+	
+	
+	/**
+	 * @return the segmental duplication blocks organized in a map sorted per chromosome
+	 */
+	public final Map<String, List<SegmentalDuplication>> getBlocks() {
+		return segDupListMap;
+	}
 }

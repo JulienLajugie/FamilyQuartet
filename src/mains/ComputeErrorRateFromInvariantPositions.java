@@ -125,7 +125,7 @@ public class ComputeErrorRateFromInvariantPositions {
 			System.out.println("Variant Count=" + itemCount + ", Error Count=" + errorCount + ", Error Rate=" + (errorCount / (double) itemCount * 100d) + '%');
 			System.out.println("MIE Error Count=" + MIEErrorCount + ", MIE Error %=" + (MIEErrorCount / (double) errorCount * 100d) + '%');
 			System.out.println("SCE Error Count=" + SCEErrorCount + ", SCE Error %=" + (SCEErrorCount / (double) errorCount * 100d) + '%');
-			System.out.println("Invariant Position Count=" + invariantPositionCount + ", Identical Blocks Error Rate=" + (errorCount / (double) invariantPositionCount));
+			System.out.println("Invariant Position Count=" + invariantPositionCount + ", Identical Blocks Error Rate per sample=" + (errorCount / (double) invariantPositionCount));
 		} finally {
 			if (reader != null) {
 				reader.close();

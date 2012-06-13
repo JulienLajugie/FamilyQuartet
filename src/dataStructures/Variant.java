@@ -44,7 +44,7 @@ public class Variant {
 	/**
 	 * Filters out MIE variants if set to true
 	 */
-	private static final boolean USE_MIE_FILTERING = true;
+	private static final boolean USE_MIE_FILTERING = false;
 
 	private final String 					chromosome;					// chromosome of the variant		
 	private final int 						position;					// position of the variant
@@ -666,7 +666,7 @@ public class Variant {
 	 * Prints the variant on the bedgraph format
 	 */
 	public void printVariantBgrFormat() {		
-		System.out.println(this.getChromosome() + "\t" + this.getPosition() + "\t" + this.getPosition() + "\t1");		
+		System.out.println(this.getChromosome() + "\t" + this.getPosition() + "\t" + (this.getPosition() + 1) + "\t1");		
 	}
 
 
@@ -824,5 +824,35 @@ public class Variant {
 	 */
 	public boolean isIndel() {
 		return isIndel;
+	}
+
+
+	/**
+	 * @param vcfLine the vcf line that needs to be corrected
+	 * @return the corrected paternal genotype
+	 */
+	public String getContaminationCorrectedGenotype(String vcfLine) {
+		String[] splitLine = vcfLine.split("\t");
+		String paternalGenotypeInfoField[] = splitLine[9].trim().split(":");
+		String[] plScores = paternalGenotypeInfoField[4].trim().split(",");
+		int refRefScore = Integer.parseInt(plScores[0].trim());
+		int altAltScore = Integer.parseInt(plScores[2].trim());
+		// if no alternative genotypes has a score of 100 or less we can't correct the paternal genotype
+		if (Math.min(refRefScore, altAltScore) <= 80) {
+			// case where the paternal genotype is 0|0 - this means that the maternal genotype
+			// is 1|1 otherwise it wouldn't create a contamination
+			if ((refRefScore < altAltScore) 
+					&& ((getAlleles(QuartetMember.MOTHER)[0] == AlleleType.ALTERNATIVE_ALLELE)
+					|| (getAlleles(QuartetMember.MOTHER)[1] == AlleleType.ALTERNATIVE_ALLELE))) {
+				return "0/0";
+			}
+			// case where the paternal is 1|1
+			if ((refRefScore > altAltScore) 
+					&& ((getAlleles(QuartetMember.MOTHER)[0] == AlleleType.REFERENCE_ALLELE)
+					|| (getAlleles(QuartetMember.MOTHER)[1] == AlleleType.REFERENCE_ALLELE))) {
+				return "1/1";
+			}
+		}		
+		return null;
 	}
 }

@@ -8,6 +8,7 @@ import java.io.IOException;
 import dataStructures.CrossTriosInheritanceState;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.InheritanceStateBlockListFactory;
+import dataStructures.SegmentalDuplicationList;
 import dataStructures.Variant;
 import exceptions.VCFException;
 
@@ -29,9 +30,19 @@ public class GenerateSCEBgr {
 			System.exit(-1);
 		} else {
 			try {
-				File VCFFile = new File(args[0].equals("-v") ? args[1] : args[3]); 
-				File blockFile = new File(args[0].equals("-b") ? args[1] : args[3]);
-				generateBlockStats(VCFFile, blockFile);
+				File VCFFile = null;
+				File blockFile = null;
+				File segDupFile = null;
+				for (int i = 0; i < args.length; i += 2) {
+					if (args[i].equals("-v")) {
+						VCFFile = new File(args[i + 1]);
+					} else if (args[i].equals("-b")) {
+						blockFile = new File(args[i + 1]);
+					} else if (args[i].equals("-s")) {			
+						segDupFile = new File(args[i + 1]);
+					}					
+				}
+				generateBlockStats(VCFFile, blockFile, segDupFile);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -47,7 +58,7 @@ public class GenerateSCEBgr {
 		if (args == null) {
 			return false;
 		}
-		if (args.length != 4) {
+		if ((args.length != 4) && (args.length != 6)){
 			return false;
 		}
 		if ((args[0].equals("-v") && args[2].equals("-b")) 
@@ -63,11 +74,16 @@ public class GenerateSCEBgr {
 	 * Generates a bgr containing only the SCE variants
 	 * @param VCFFile VCF files with the variants of the family quartet
 	 * @param blockFile block files in a bgr format
+	 * @param segDupFile bed or bgr file containing the segmental duplication. Variants in these regions will be excluded.  Can be null 
 	 * @throws IOException if the VCF file is not valid
 	 */
-	private static void generateBlockStats(File VCFFile, File blockFile) throws IOException {
+	private static void generateBlockStats(File VCFFile, File blockFile, File segDupFile) throws IOException {
 		InheritanceStateBlockList<CrossTriosInheritanceState> blockList;
-		blockList = InheritanceStateBlockListFactory.createFromCrossTriosBgrFile(blockFile);	
+		blockList = InheritanceStateBlockListFactory.createFromCrossTriosBgrFile(blockFile);
+		SegmentalDuplicationList segDupList = null;
+		if (segDupFile != null) {
+			segDupList = new SegmentalDuplicationList(segDupFile);
+		}
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
@@ -78,10 +94,13 @@ public class GenerateSCEBgr {
 				if (line.charAt(0) != '#') {
 					try {
 						Variant currentVariant = new Variant(line);
-						if (!currentVariant.isIndel()) {
-							if (blockList.getBlock(currentVariant) != null) {
-								if (blockList.getBlock(currentVariant).isSCE(currentVariant)) {
-									System.out.println(currentVariant.getChromosome() + '\t' + currentVariant.getPosition() + '\t' + (currentVariant.getPosition() + 1) + '\t' + 1);
+						if (segDupList == null || !segDupList.isInSegmentalDuplication(currentVariant)) {
+							// we don't want indels
+							if (!currentVariant.isIndel()) {
+								if (blockList.getBlock(currentVariant) != null) {
+									if (blockList.getBlock(currentVariant).isSCE(currentVariant)) {
+										System.out.println(currentVariant.getChromosome() + '\t' + currentVariant.getPosition() + '\t' + (currentVariant.getPosition() + 1) + '\t' + 1);
+									}
 								}
 							}
 						}

@@ -281,6 +281,24 @@ public class PhasedVector implements Comparable<PhasedVector> {
 	
 	
 	/**
+	 * @param member a {@link QuartetMember}
+	 * @return true if the specified member is heterozygous
+	 */
+	public Boolean isHeterozygous(QuartetMember member) {
+		String genotype = getGenotype(member);
+		if (genotype == null) {
+			return null;
+		} else {
+			if (genotype.charAt(0) == genotype.charAt(2)) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	}
+	
+	
+	/**
 	 * Set the phasing of the specified family member to the specified value 
 	 * @param quartetMember a quartet member
 	 * @param isPhased true if the member is phased, false otherwise
@@ -352,7 +370,6 @@ public class PhasedVector implements Comparable<PhasedVector> {
 		}
 		boolean bitTmp = isSet(bitAllele1);
 		setBit(bitAllele1, isSet(bitAllele2));
-		setBit(bitAllele2, bitTmp);
-		
+		setBit(bitAllele2, bitTmp);		
 	}
 }
