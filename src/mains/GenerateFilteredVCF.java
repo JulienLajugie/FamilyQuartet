@@ -80,7 +80,8 @@ public class GenerateFilteredVCF {
 	private static void generateFilteredVCF(File VCFFile, File segDupFile, File blockFile) throws IOException {
 		SegmentalDuplicationList segDupList = null;
 		if (segDupFile != null) {
-			segDupList = new SegmentalDuplicationList(segDupFile);
+			segDupList = new SegmentalDuplicationList();
+			segDupList.loadBedOrBgr(segDupFile);
 		}
 		InheritanceStateBlockList<CrossTriosInheritanceState> isBlockList = null;
 		if (blockFile != null) {

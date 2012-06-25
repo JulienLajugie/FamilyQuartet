@@ -82,7 +82,6 @@ public class ComparePhysicalAndGeneticPhasing {
 		// load physical phasing file
 		PhasedVectorList physicalVectorList = new PhasedVectorList();
 		physicalVectorList.loadFromVCFFile(physicalPhasingFile);
-		physicalVectorList.convertFromPhysicalToGeneticVectorList();
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(geneticPhasingFile));
@@ -104,28 +103,28 @@ public class ComparePhysicalAndGeneticPhasing {
 					PhasedVector physicalPhasedVector = physicalVectorList.getPhasedVector(chromosome, position);
 					// father
 					if ((geneticPhasedVector != null) && (physicalPhasedVector != null)) {
-						int result = paternalSeries.addGenotypes(geneticPhasedVector.getFatherGenotype(), physicalPhasedVector.getFatherGenotype(), chromosome, position);
+						int result = paternalSeries.addGeneticPhysicalGenotypes(geneticPhasedVector.getFatherGenotype(), physicalPhasedVector.getFatherGenotype(), chromosome, position);
 						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
 							compatibleGenotypesCount += paternalSeries.getCompatibleGenotypes();
 							incompatibleGenotypesCount += paternalSeries.getIncompatibleGenotypes();
 							paternalSeries.reset();
 						}
 						// mother
-						result = maternalSeries.addGenotypes(geneticPhasedVector.getMotherGenotype(), physicalPhasedVector.getMotherGenotype(), chromosome, position);
+						result = maternalSeries.addGeneticPhysicalGenotypes(geneticPhasedVector.getMotherGenotype(), physicalPhasedVector.getMotherGenotype(), chromosome, position);
 						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
 							compatibleGenotypesCount += maternalSeries.getCompatibleGenotypes();
 							incompatibleGenotypesCount += maternalSeries.getIncompatibleGenotypes();
 							maternalSeries.reset();
 						}
 						// kid 1
-						result = kid1Series.addGenotypes(geneticPhasedVector.getKid1Genotype(), physicalPhasedVector.getKid1Genotype(), chromosome, position);
+						result = kid1Series.addGeneticPhysicalGenotypes(geneticPhasedVector.getKid1Genotype(), physicalPhasedVector.getKid1Genotype(), chromosome, position);
 						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
 							compatibleGenotypesCount += kid1Series.getCompatibleGenotypes();
 							incompatibleGenotypesCount += kid1Series.getIncompatibleGenotypes();
 							kid1Series.reset();
 						}
 						// kid 2
-						result = kid2Series.addGenotypes(geneticPhasedVector.getKid2Genotype(), physicalPhasedVector.getKid2Genotype(), chromosome, position);
+						result = kid2Series.addGeneticPhysicalGenotypes(geneticPhasedVector.getKid2Genotype(), physicalPhasedVector.getKid2Genotype(), chromosome, position);
 						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
 							compatibleGenotypesCount += kid2Series.getCompatibleGenotypes();
 							incompatibleGenotypesCount += kid2Series.getIncompatibleGenotypes();							

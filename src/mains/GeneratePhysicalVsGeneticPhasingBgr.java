@@ -98,10 +98,9 @@ public class GeneratePhysicalVsGeneticPhasingBgr {
 		// load physical phasing file
 		PhasedVectorList physicalVectorList = new PhasedVectorList();
 		physicalVectorList.loadFromVCFFile(physicalPhasingFile);
-		physicalVectorList.convertFromPhysicalToGeneticVectorList();
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new FileReader(geneticPhasingFile));
+			reader = new BufferedReader(new FileReader(physicalPhasingFile));
 			String line = null;
 			PhasedGenotypesSeries phasedSeries = new PhasedGenotypesSeries();
 			// loop until eof
@@ -114,7 +113,7 @@ public class GeneratePhysicalVsGeneticPhasingBgr {
 					PhasedVector geneticPhasedVector = geneticVectorList.getPhasedVector(chromosome, position);
 					PhasedVector physicalPhasedVector = physicalVectorList.getPhasedVector(chromosome, position);
 					if ((geneticPhasedVector != null) && (physicalPhasedVector != null)) {
-						int result = phasedSeries.addGenotypes(geneticPhasedVector.getGenotype(member), physicalPhasedVector.getGenotype(member), chromosome, position);
+						int result = phasedSeries.addGeneticPhysicalGenotypes(geneticPhasedVector.getGenotype(member), physicalPhasedVector.getGenotype(member), chromosome, position);
 						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
 							phasedSeries.printResultPhasingBgr();
 							phasedSeries.reset();

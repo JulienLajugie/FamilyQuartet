@@ -87,7 +87,8 @@ public class GenerateBlockStats {
 		blockList = InheritanceStateBlockListFactory.createFromCrossTriosBgrFile(blockFile);
 		SegmentalDuplicationList segDupList = null;
 		if (segDupFile != null) {
-			segDupList = new SegmentalDuplicationList(segDupFile);
+			segDupList = new SegmentalDuplicationList();
+			segDupList.loadBedOrBgr(segDupFile);
 		}
 		int variantCount = 0;
 		int indelCount = 0;

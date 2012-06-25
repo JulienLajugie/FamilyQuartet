@@ -82,7 +82,8 @@ public class GenerateSCEBgr {
 		blockList = InheritanceStateBlockListFactory.createFromCrossTriosBgrFile(blockFile);
 		SegmentalDuplicationList segDupList = null;
 		if (segDupFile != null) {
-			segDupList = new SegmentalDuplicationList(segDupFile);
+			segDupList = new SegmentalDuplicationList();
+			segDupList.loadBedOrBgr(segDupFile);
 		}
 		BufferedReader reader = null;
 		try {

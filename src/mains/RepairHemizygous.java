@@ -98,10 +98,14 @@ public class RepairHemizygous {
 	 * @throws IOException
 	 */
 	private static void repairHemizygous(File VCFFile, File paternalHemiBlockFile, File maternalHemiBlockFile, File kid1HemiBlockFile, File kid2HemiBlockFile) throws IOException {
-		SegmentalDuplicationList paternalHemiBlocks = new SegmentalDuplicationList(paternalHemiBlockFile);
-		SegmentalDuplicationList maternalHemiBlocks = new SegmentalDuplicationList(maternalHemiBlockFile);
-		SegmentalDuplicationList kid1HemiBlocks = new SegmentalDuplicationList(kid1HemiBlockFile);
-		SegmentalDuplicationList kid2HemiBlocks = new SegmentalDuplicationList(kid2HemiBlockFile);
+		SegmentalDuplicationList paternalHemiBlocks = new SegmentalDuplicationList();
+		paternalHemiBlocks.loadBedOrBgr(paternalHemiBlockFile);
+		SegmentalDuplicationList maternalHemiBlocks = new SegmentalDuplicationList();
+		maternalHemiBlocks.loadBedOrBgr(maternalHemiBlockFile);
+		SegmentalDuplicationList kid1HemiBlocks = new SegmentalDuplicationList();
+		kid1HemiBlocks.loadBedOrBgr(kid1HemiBlockFile);
+		SegmentalDuplicationList kid2HemiBlocks = new SegmentalDuplicationList();
+		kid2HemiBlocks.loadBedOrBgr(kid2HemiBlockFile);
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));

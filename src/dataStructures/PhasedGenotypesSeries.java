@@ -29,10 +29,11 @@ public class PhasedGenotypesSeries {
 	private final List<Integer> positions;	// list containing the positions associated to the genotypes
 	private String chromosome;				// chromosome of the series
 	private boolean isAnalyzed;				// true if the genotypes list has been analyzed
-	private Integer firstPosition = null;	// position of the first element of a series
-	private String firstGenotype= null;		// genotype of the first element of a series 
 	private int compatibleGenotypes;		// count of compatible genotype vectors
 	private int incompatibleGenotypes;		// count of incompatible genotype vectors
+	private Integer firstPosition;
+	private String firstGenotype;
+
 
 
 	/**
@@ -46,20 +47,23 @@ public class PhasedGenotypesSeries {
 		incompatibleGenotypes = 0;
 		isAnalyzed = false;
 		chromosome = null;
+		firstPosition = null;
+		firstGenotype = null;
 	}
 
 
 	/**
-	 * Adds two genotypes to the series of phased genotypes if both genotypes are phased and if they are heterozygous 
-	 * @param genotype1 first genotype to add
-	 * @param genotype2 second genotype to add
+	 * Adds two genetic genotypes to the series of phased genotypes if both genotypes are phased and if they are heterozygous 
+	 * @param genotype1 first genetic genotype to add
+	 * @param genotype2 second genetic genotype to add
 	 * @param chromosome chromosome of the genotypes
 	 * @param position position of the genotypes
 	 * @return GENOTYPES_ADDED if the genotypes were added,
 	 * NOTHING_TO_ADD if the genotypes are not heterozygous,
 	 * SERIES_FINISHED if at least one of the genotypes is not phased 
 	 */
-	public int addGenotypes(String genotype1, String genotype2, String chromosome, int position) {
+	public int add2GeneticGenotypes(String genotype1, String genotype2, String chromosome, int position) {
+		// case where we start a new chromosome
 		if (this.chromosome == null) {
 			this.chromosome = chromosome;
 		} else if (!this.chromosome.equals(chromosome)) {
@@ -71,18 +75,65 @@ public class PhasedGenotypesSeries {
 		}
 		// case where at least one of the genotype is not phased
 		if ((genotype1.charAt(1) != '|') || (genotype2.charAt(1) != '|')) {
-			firstPosition = position;
-			firstGenotype = (genotype1 + genotype2);
 			return SERIES_FINISHED;
 		}
+		positions.add(position);
+		genotypes.add(genotype1 + genotype2);
+		return GENOTYPES_ADDED;
+	}
+
+
+	/**
+	 * Adds two genetic genotypes to the series of phased genotypes if both genotypes are phased and if they are heterozygous 
+	 * @param geneticGenotype genetic genotype to add
+	 * @param physicalGenotype physical genotype to add
+	 * @param chromosome chromosome of the genotypes
+	 * @param position position of the genotypes
+	 * @return GENOTYPES_ADDED if the genotypes were added,
+	 * NOTHING_TO_ADD if the genotypes are not heterozygous,
+	 * SERIES_FINISHED if at least one of the genotypes is not phased 
+	 */
+	public int addGeneticPhysicalGenotypes(String geneticGenotype, String physicalGenotype, String chromosome, int position) {
+		// case where we start a new chromosome
+		if (this.chromosome == null) {
+			this.chromosome = chromosome;
+		} else if (!this.chromosome.equals(chromosome)) {
+			if (firstPosition != null) {
+				positions.add(firstPosition);
+				genotypes.add(firstGenotype);
+				firstPosition = null;
+				firstGenotype = null;
+			}
+			return SERIES_FINISHED;
+		}
+		// we just want to study heterozygous genotypes
+		if (geneticGenotype.charAt(0) == geneticGenotype.charAt(2)) {
+			return NOTHING_TO_ADD;
+		}
+		// case where the genetic genotype is not phased
+		if (geneticGenotype.charAt(1) != '|') {
+			if (firstPosition != null) {
+				positions.add(firstPosition);
+				genotypes.add(firstGenotype);
+				firstPosition = null;
+				firstGenotype = null;
+			}
+			return SERIES_FINISHED;
+		} else if (physicalGenotype.charAt(1) != '|') {
+			// case where the physical genotype is not phased
+			firstPosition = position;
+			firstGenotype = geneticGenotype + physicalGenotype;
+			return SERIES_FINISHED;
+		}
+		// case where both genotypes are phased
 		if (firstPosition != null) {
-			genotypes.add(firstGenotype);
 			positions.add(firstPosition);
+			genotypes.add(firstGenotype);
 			firstPosition = null;
 			firstGenotype = null;
 		}
-		genotypes.add(genotype1 + genotype2);
 		positions.add(position);
+		genotypes.add(geneticGenotype + physicalGenotype);
 		return GENOTYPES_ADDED;
 	}
 
@@ -97,8 +148,6 @@ public class PhasedGenotypesSeries {
 		genotypes.clear();
 		positions.clear();
 		chromosome = null;
-		firstPosition = null;
-		firstGenotype = null;
 	}
 
 
@@ -139,10 +188,11 @@ public class PhasedGenotypesSeries {
 		}
 		List<Integer> compatibleList = new ArrayList<Integer>();
 		List<Integer> incompatibleList = new ArrayList<Integer>();
-		if (genotypes.size() > 1) {
+		//if (genotypes.size() > 1) {
 			for (int i = 0; i < genotypes.size(); i++) {
 				String currentGenotype = genotypes.get(i);
 				Integer currentPosition = positions.get(i);
+
 				if((currentGenotype.charAt(0) == currentGenotype.charAt(3)) && (currentGenotype.charAt(2) == currentGenotype.charAt(5))) {
 					compatibleList.add(currentPosition);
 				} else {
@@ -156,14 +206,38 @@ public class PhasedGenotypesSeries {
 				incompatibleList = listTmp;
 			}
 			// print on the bedgraph format with a score of 1 for compatible vector or -1 for incompatible
-			for (Integer currentPosition: positions) {
+			for (int i = 0; i < positions.size(); i++) {				
+				int currentPosition = positions.get(i);
+				int score = 0;
 				if (compatibleList.contains(currentPosition)) {
-					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t1");					
+					score = 1;
 				} else {
-					System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t-1");
+					score = -1;
 				}
+				// the first element has a double score
+				if (i == 0) {
+					score *= 2;
+				}
+				// the first element has a triple score
+				if (i == positions.size() - 1) {
+					score *= 3;
+				}
+				System.out.println(chromosome + '\t' + currentPosition + '\t' + (currentPosition + 1) + "\t" + score);
 			}
+		//}
+	}
+
+
+	/**
+	 * @return a segmental duplication block with the start and the stop position of the series
+	 */
+	public SegmentalDuplication getBlock() {
+		if (!positions.isEmpty()) {
+			int blockStart = positions.get(0);
+			int blockStop = positions.get(positions.size() - 1);
+			return new SegmentalDuplication(blockStart, blockStop);
 		}
+		return null;
 	}
 
 

@@ -115,7 +115,7 @@ public class Compare2TriosPhasedByTransmission {
 					PhasedVector trio1PhasedVector = trio1VectorList.getPhasedVector(chromosome, position);
 					PhasedVector trio2PhasedVector = trio2VectorList.getPhasedVector(chromosome, position);
 					if ((trio1PhasedVector != null) && (trio2PhasedVector != null)) {
-						int result = phasedVectorSeries.addGenotypes(trio1PhasedVector.getGenotype(quartetMember), trio2PhasedVector.getGenotype(quartetMember), chromosome, position);
+						int result = phasedVectorSeries.add2GeneticGenotypes(trio1PhasedVector.getGenotype(quartetMember), trio2PhasedVector.getGenotype(quartetMember), chromosome, position);
 						if (result == PhasedGenotypesSeries.SERIES_FINISHED) {
 							phasedVectorSeries.printResultPhasingBgr();
 							phasedVectorSeries.reset();

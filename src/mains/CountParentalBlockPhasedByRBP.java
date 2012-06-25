@@ -87,8 +87,10 @@ public class CountParentalBlockPhasedByRBP {
 	 * @throws IOException
 	 */
 	private static void countParentalBlockPhasedByRBP(File inheritanceStateFile, File RBPFile, QuartetMember member) throws IOException {
-		SegmentalDuplicationList inheritanceBlocks = new SegmentalDuplicationList(inheritanceStateFile);
-		SegmentalDuplicationList readBackedBlocks = new SegmentalDuplicationList(RBPFile);		
+		SegmentalDuplicationList inheritanceBlocks = new SegmentalDuplicationList();
+		inheritanceBlocks.loadBedOrBgr(inheritanceStateFile);
+		SegmentalDuplicationList readBackedBlocks = new SegmentalDuplicationList();
+		readBackedBlocks.loadBedOrBgr(RBPFile);
 		int phasedBlockCount = 0;
 		for (String currentChromosome: inheritanceBlocks.getBlocks().keySet()) {
 			List<SegmentalDuplication> currentInheritanceBlockList = inheritanceBlocks.getBlocks().get(currentChromosome);

@@ -20,23 +20,19 @@ public class SegmentalDuplicationList {
 
 
 	/**
-	 * Creates an instance of {@link SegmentalDuplicationList} from the specified file
-	 * @param file a bed or a begraph file
-	 * @throws IOException 
+	 * Creates an instance of {@link SegmentalDuplicationList} 
 	 */
-	public SegmentalDuplicationList(File file) throws IOException {
-		this.segDupListMap = createSegmentalDuplicationMap(file);
+	public SegmentalDuplicationList() {
+		this.segDupListMap = new HashMap<String, List<SegmentalDuplication>>();
 	}
 
 
 	/**
 	 * @param file bed or bgr file
-	 * @return lists of segmental duplication organized by chromosome from the specified file
 	 * @throws IOException
 	 */
-	private Map<String, List<SegmentalDuplication>> createSegmentalDuplicationMap(File file) throws IOException {
+	public void loadBedOrBgr(File file) throws IOException {
 		BufferedReader reader = null;
-		Map<String, List<SegmentalDuplication>> segDupListMap = new HashMap<String, List<SegmentalDuplication>>();
 		try {
 			reader = new BufferedReader(new FileReader(file));
 			String line = null;
@@ -51,24 +47,41 @@ public class SegmentalDuplicationList {
 					int startPosition = Integer.parseInt(splitLine[1].trim());
 					int stopPosition = Integer.parseInt(splitLine[2].trim());
 					SegmentalDuplication segDupToAdd = new SegmentalDuplication(startPosition, stopPosition);
-					// if the list doesn't contain the chromosome we add it
-					if (!segDupListMap.containsKey(chromosome)) {
-						List<SegmentalDuplication> listToAdd = new ArrayList<>();
-						listToAdd.add(segDupToAdd);
-						segDupListMap.put(chromosome, listToAdd);						
-					} else {
-						segDupListMap.get(chromosome).add(segDupToAdd);
-					}
+					addDuplication(chromosome, segDupToAdd);
 				}
 			}
-			for (List<SegmentalDuplication> currentList: segDupListMap.values()) {
-				Collections.sort(currentList);
-			}
-			return segDupListMap;
+			sort();
 		} finally {
 			if (reader != null) {
 				reader.close();
 			}
+		}
+	}
+
+
+	/**
+	 * Adds a segmental duplication to the map
+	 * @param chromosome chromosome of the duplication
+	 * @param duplicationToAdd
+	 */
+	public void addDuplication(String chromosome, SegmentalDuplication duplicationToAdd) {
+		// if the list doesn't contain the chromosome we add it
+		if (!segDupListMap.containsKey(chromosome)) {
+			List<SegmentalDuplication> listToAdd = new ArrayList<>();
+			listToAdd.add(duplicationToAdd);
+			segDupListMap.put(chromosome, listToAdd);						
+		} else {
+			segDupListMap.get(chromosome).add(duplicationToAdd);
+		}
+	}
+
+
+	/**
+	 * Sorts the lists of block in position order
+	 */
+	public void sort() {
+		for (List<SegmentalDuplication> currentList: segDupListMap.values()) {
+			Collections.sort(currentList);
 		}
 	}
 
@@ -92,15 +105,35 @@ public class SegmentalDuplicationList {
 			List<SegmentalDuplication> chromosomeBlockList = segDupListMap.get(chromosome);
 			for (SegmentalDuplication currentDuplication: chromosomeBlockList) {
 				if ((position >= currentDuplication.getStartPosition()) 
-						&& (position < currentDuplication.getStopPosition())) {
+						&& (position <= currentDuplication.getStopPosition())) {
 					return currentDuplication;
 				}
 			}
 		}
 		return null;
 	}
-	
-	
+
+
+	/**
+	 * @param chromosome a chromosome
+	 * @param block a {@link SegmentalDuplication}
+	 * @return true if the list contains a bock that overlap with the specified {@link SegmentalDuplication} on the specified chromosome
+	 */
+	public boolean containsBlockOverlapping(String chromosome, SegmentalDuplication block) {
+		if (segDupListMap.containsKey(chromosome)) {
+			List<SegmentalDuplication> chromosomeBlockList = segDupListMap.get(chromosome);
+			for (SegmentalDuplication currentDuplication: chromosomeBlockList) {
+				if (((block.getStartPosition() >= currentDuplication.getStartPosition()) && (block.getStartPosition() <= currentDuplication.getStopPosition()))
+						|| ((block.getStopPosition() >= currentDuplication.getStartPosition()) && (block.getStopPosition() <= currentDuplication.getStopPosition()))
+						|| ((block.getStartPosition() <= currentDuplication.getStartPosition()) && (block.getStopPosition() >= currentDuplication.getStopPosition()))) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+
 	/**
 	 * @return the segmental duplication blocks organized in a map sorted per chromosome
 	 */
