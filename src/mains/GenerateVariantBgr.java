@@ -85,7 +85,7 @@ public class GenerateVariantBgr {
 					try {
 						Variant currentVariant = new Variant(line);
 						// we don't process variants with more than one alternative allele or indels
-						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
+						if ((currentVariant.getAlternativeAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
 							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than one alt allele.", line);
 						}
 						if ((STATE_OF_VARIANTS_TO_PRINT == null) && (blockList.getBlock(currentVariant).isSCE(currentVariant))) {

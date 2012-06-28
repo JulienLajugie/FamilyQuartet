@@ -55,27 +55,6 @@ public class CrossTriosInheritanceStateBlock implements InheritanceStateBlock<Cr
 
 
 	/**
-	 * @param variant a {@link Variant}
-	 * @return true if the specified variant is a SCE (State Consistency Error)
-	 */
-	public boolean isSCE(Variant variant) {
-		boolean isSCE = true;
-		for (QuartetInheritanceState currentInheritanceState: variant.getInheritanceStates()) {
-			if (currentInheritanceState == QuartetInheritanceState.MIE) {
-				return false;
-			}
-			if (currentInheritanceState == QuartetInheritanceState.NOT_INFORMATIVE) {
-				return false;
-			}
-			if (currentInheritanceState.isCompatibleWith(blockState)) {
-				isSCE = false;
-			}
-		}
-		return isSCE;
-	}
-
-
-	/**
 	 * @return the blockState
 	 */
 	public final CrossTriosInheritanceState getBlockState() {
@@ -188,5 +167,11 @@ public class CrossTriosInheritanceStateBlock implements InheritanceStateBlock<Cr
 		statistics += NICount +"\t";
 		statistics += getNIPercentage();
 		return statistics;
+	}
+
+
+	@Override
+	public boolean isSCE(Variant variant) {
+		return variant.isSCE(this.getBlockState());
 	}
 }

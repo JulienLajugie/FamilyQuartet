@@ -24,11 +24,11 @@ public class Variant {
 	/**
 	 * Value of the PL filter. Set to null to disable
 	 */
-	private static final Integer INDIVIDUALS_PL_MIN_VALUE = 50;
+	private static final Integer INDIVIDUALS_PL_MIN_VALUE = null;
 	/**
 	 * Filter removing all the variant with the filter field different from "PASS"
 	 */
-	private static final VCFFilterField FILTER_FIELD_FILTERING = VCFFilterField.PASS;
+	private static final VCFFilterField FILTER_FIELD_FILTERING = VCFFilterField.NONE;
 	/**
 	 * Filter excluding the fully heterozygous genotypes
 	 */
@@ -141,6 +141,66 @@ public class Variant {
 				((genotypePattern.equals("ab+aa;ab/ab") || genotypePattern.equals("aa+ab;ab/ab") || genotypePattern.equals("ab/ab;aa/ab")))) {
 			throw new InvalidVCFLineException("Invalid VCF file: 3/4 heterozygous variant", VCFLine); 
 		}
+	}
+
+
+	/**
+	 * Creates an instance of Variant with arbitrary informations for anything but genotype and inheritance state
+	 * @param currentGenotype a genotype represented by a byte
+	 */
+	public Variant(int currentGenotype) {
+		this.chromosome = "chr1";
+		this.position = 1;
+		this.referenceAllele = "C";
+		this.alternatievAllele = "T";
+		this.fatherAlleles = byteToAlleleType(currentGenotype, QuartetMember.FATHER);
+		this.motherAlleles = byteToAlleleType(currentGenotype, QuartetMember.MOTHER);
+		this.kid1Alleles = byteToAlleleType(currentGenotype, QuartetMember.KID1);
+		this.kid2Alleles = byteToAlleleType(currentGenotype, QuartetMember.KID2);
+		this.isIndel = false;
+		this.genotypePattern = computeGenotypePattern();
+		this.quartetInheritanceStates = PatternToInheritanceStates.getInheritanceStates(genotypePattern);
+		this.phasingQualityIndex = 0;
+		//System.out.println(Integer.toBinaryString(currentGenotype) + "\t-->\t" + genotypePattern);		
+	}
+
+
+	/**
+	 * @param currentGenotype genotype represented as a byte with one bit per allele as follow:
+	 * (paternal allele1, paternal allele2, maternal allele1, maternal allele2, kid1 allele1, kid1 allele2, kid2 allele1, kid2 allele2) 
+	 * @param member a {@link QuartetMember}
+	 * @return the 2 alleles of the specified family member
+	 */
+	private AlleleType[] byteToAlleleType(int currentGenotype, QuartetMember member) {
+		byte offsetAllele1 = 0;
+		switch (member) {
+		case FATHER:
+			offsetAllele1 = 6;
+			break;
+		case MOTHER:
+			offsetAllele1 = 4;
+			break;
+		case KID1:
+			offsetAllele1 = 2;
+			break;
+		case KID2:
+			offsetAllele1 = 0;
+			break;
+		}
+		int offsetAllele2 = offsetAllele1 + 1;
+		AlleleType allele1, allele2;
+		if ((currentGenotype  & (1 << offsetAllele1)) == 0) {
+			allele1 = AlleleType.REFERENCE_ALLELE;
+		} else { 
+			allele1 = AlleleType.ALTERNATIVE_ALLELE;
+		}
+		if ((currentGenotype  & (1 << offsetAllele2)) == 0) {
+			allele2 = AlleleType.REFERENCE_ALLELE;
+		} else { 
+			allele2 = AlleleType.ALTERNATIVE_ALLELE;
+		}
+		AlleleType[] alleles = {allele1, allele2};
+		return alleles;
 	}
 
 
@@ -460,7 +520,7 @@ public class Variant {
 		return fatherPattern + "+" + motherPattern;		
 	}
 
-	
+
 	/**
 	 * @param allele an {@link AlleleType}
 	 * @return the number of allele having the specified {@link AlleleType} in the quartet
@@ -477,8 +537,8 @@ public class Variant {
 		alleleCount = getAlleles(QuartetMember.KID2)[1] == allele ? alleleCount + 1 : alleleCount;		
 		return alleleCount;
 	}
-	
-	
+
+
 	/**
 	 * @return the chromosome of the variant
 	 */
@@ -506,7 +566,7 @@ public class Variant {
 	/**
 	 * @return the alternatiev allele of the variant
 	 */
-	public final String getAlternatievAllele() {
+	public final String getAlternativeAllele() {
 		return alternatievAllele;
 	}
 
@@ -843,16 +903,37 @@ public class Variant {
 			// is 1|1 otherwise it wouldn't create a contamination
 			if ((refRefScore < altAltScore) 
 					&& ((getAlleles(QuartetMember.MOTHER)[0] == AlleleType.ALTERNATIVE_ALLELE)
-					|| (getAlleles(QuartetMember.MOTHER)[1] == AlleleType.ALTERNATIVE_ALLELE))) {
+							|| (getAlleles(QuartetMember.MOTHER)[1] == AlleleType.ALTERNATIVE_ALLELE))) {
 				return "0/0";
 			}
 			// case where the paternal is 1|1
 			if ((refRefScore > altAltScore) 
 					&& ((getAlleles(QuartetMember.MOTHER)[0] == AlleleType.REFERENCE_ALLELE)
-					|| (getAlleles(QuartetMember.MOTHER)[1] == AlleleType.REFERENCE_ALLELE))) {
+							|| (getAlleles(QuartetMember.MOTHER)[1] == AlleleType.REFERENCE_ALLELE))) {
 				return "1/1";
 			}
 		}		
 		return null;
+	}
+
+
+	/**
+	 * @param inheritanceState a {@link CrossTriosInheritanceState}
+	 * @return true if the variant is a SCE for the specified {@link CrossTriosInheritanceState}
+	 */
+	public boolean isSCE(CrossTriosInheritanceState inheritanceState) {
+		boolean isSCE = true;
+		for (QuartetInheritanceState currentInheritanceState: getInheritanceStates()) {
+			if (currentInheritanceState == QuartetInheritanceState.MIE) {
+				return false;
+			}
+			if (currentInheritanceState == QuartetInheritanceState.NOT_INFORMATIVE) {
+				return false;
+			}
+			if (currentInheritanceState.isCompatibleWith(inheritanceState)) {
+				isSCE = false;
+			}
+		}
+		return isSCE;
 	}
 }

@@ -87,7 +87,7 @@ public class GenerateFileWithCommonAffySeqVariants {
 		try {
 			reader = new BufferedReader(new FileReader(vcfFile));
 			String line = null;
-			System.out.println("#chromosome\tposition\tdbSNP\tVCF_genotype\tAffy_genotype");
+			System.out.println("#chromosome\tposition\tdbSNP\tVCF_genotype\tAffy_genotype\tVCF_ref\tVCF_alt");
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
@@ -103,8 +103,10 @@ public class GenerateFileWithCommonAffySeqVariants {
 								String[] splitLine = line.split("\t"); 
 								String dbSNPRef = splitLine[2].trim();
 								String vcfGenotype = vcfGenotypeToAffyGenotype(splitLine[9].trim());
-								String affyGenotype = affySNP.getCallCode(); 
-								System.out.println(chromosome + "\t" + position + "\t" + dbSNPRef + "\t" + vcfGenotype + "\t" + affyGenotype);
+								String affyGenotype = affySNP.getCallCode();
+								String vcfRef = variant.getReferenceAllele();
+								String vcfAlt = variant.getAlternativeAllele();
+								System.out.println(chromosome + "\t" + position + "\t" + dbSNPRef + "\t" + vcfGenotype + "\t" + affyGenotype + "\t" + vcfRef + "\t" + vcfAlt);
 								//VCFSNPFoundCount++;
 							}
 						}

@@ -80,7 +80,6 @@ public class CrossTriosInheritanceState implements InheritanceState {
 	
 	
 	/**
-	 * 
 	 * @param blockState a {@link QuartetInheritanceState}
 	 * @return true if compatible with specified {@link QuartetInheritanceState}
 	 */

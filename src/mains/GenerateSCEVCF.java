@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import dataStructures.CrossTriosInheritanceState;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.InheritanceStateBlockListFactory;
 import dataStructures.QuartetInheritanceState;
@@ -67,28 +68,37 @@ public class GenerateSCEVCF {
 	 * @throws IOException if the VCF file is not valid
 	 */
 	private static void generateBlockStats(File VCFFile, File blockFile) throws IOException {
-		InheritanceStateBlockList<QuartetInheritanceState> blockList;
-		blockList = InheritanceStateBlockListFactory.createFromISCAFile(blockFile);	
+		InheritanceStateBlockList<CrossTriosInheritanceState> blockList;
+		blockList = InheritanceStateBlockListFactory.createFromCrossTriosBgrFile(blockFile);	
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
 			String line = null;
+			int i = 0 ;
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
 				if (line.charAt(0) != '#') {
 					try {
 						Variant currentVariant = new Variant(line);
-						// we don't process variants with more than one alternative allele or indels
-						if ((currentVariant.getAlternatievAllele().length() != 1) || (currentVariant.getReferenceAllele().length() != 1)) {
-							throw new InvalidVCFLineException("Invalid VCF line: indel or variant with more than one alt allele.", line);
-						}
-						if (blockList.getBlock(currentVariant).isSCE(currentVariant)) {
+						// we don't process indels
+						if (!currentVariant.isIndel()) {
+						/*if (blockList.getBlock(currentVariant).isSCE(currentVariant)) {
 							System.out.println(line);
+						}*/
+							String[] splitLine = line.split("\t"); // VCF fields are tab delimited
+							// filter using the filter field
+							if (splitLine[6].trim().equals("PASS") && i < 900000) {
+								if (!currentVariant.isMIE() && ((blockList.getBlock(currentVariant) == null) || !currentVariant.isSCE(blockList.getBlock(currentVariant).getBlockState()))) {
+									System.out.println(line);
+									i++;
+									//currentVariant.printVariantBgrFormat();
+								}
+							}
 						}
 					} catch (VCFException e) {
 						// do nothing
-					}					
+					}
 				}
 			}	
 		} finally {

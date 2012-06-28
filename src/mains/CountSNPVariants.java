@@ -59,7 +59,7 @@ public class CountSNPVariants {
 					try {
 						Variant currentVariant = new Variant(line);
 						// we don't process indels variants
-						if ((currentVariant.getReferenceAllele().length() == 1) && (currentVariant.getAlternatievAllele().length() == 1)) {
+						if ((currentVariant.getReferenceAllele().length() == 1) && (currentVariant.getAlternativeAllele().length() == 1)) {
 							if (currentVariant.isSNP(QuartetMember.FATHER)) {
 								fatherSnpCount++;
 							}
