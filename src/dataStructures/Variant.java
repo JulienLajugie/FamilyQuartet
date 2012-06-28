@@ -284,6 +284,9 @@ public class Variant {
 				throw new FilteredVCFLineException("Filter Field", filterField);	
 			}
 			break;
+		case NONE:
+			// do nothing
+			break;
 		}
 	}
 

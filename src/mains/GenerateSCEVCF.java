@@ -8,9 +8,7 @@ import java.io.IOException;
 import dataStructures.CrossTriosInheritanceState;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.InheritanceStateBlockListFactory;
-import dataStructures.QuartetInheritanceState;
 import dataStructures.Variant;
-import exceptions.InvalidVCFLineException;
 import exceptions.VCFException;
 
 /**
@@ -74,7 +72,6 @@ public class GenerateSCEVCF {
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
 			String line = null;
-			int i = 0 ;
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
@@ -83,17 +80,8 @@ public class GenerateSCEVCF {
 						Variant currentVariant = new Variant(line);
 						// we don't process indels
 						if (!currentVariant.isIndel()) {
-						/*if (blockList.getBlock(currentVariant).isSCE(currentVariant)) {
-							System.out.println(line);
-						}*/
-							String[] splitLine = line.split("\t"); // VCF fields are tab delimited
-							// filter using the filter field
-							if (splitLine[6].trim().equals("PASS") && i < 900000) {
-								if (!currentVariant.isMIE() && ((blockList.getBlock(currentVariant) == null) || !currentVariant.isSCE(blockList.getBlock(currentVariant).getBlockState()))) {
-									System.out.println(line);
-									i++;
-									//currentVariant.printVariantBgrFormat();
-								}
+							if ((blockList.getBlock(currentVariant) != null) && (currentVariant.isSCE(blockList.getBlock(currentVariant).getBlockState()))) {
+								System.out.println(line);
 							}
 						}
 					} catch (VCFException e) {

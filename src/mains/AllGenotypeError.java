@@ -8,16 +8,29 @@ import dataStructures.Variant;
 
 
 /**
+ * Generates all the possible genotypes
+ * For each genotype generates all the possible single errors
+ * For each inheritance state where the genotype is not a SCE nor a MIE, 
+ * checks if the error is detected as a SCE or a MIE or if the error is not detected
  * @author Julien Lajugie
  */
 public class AllGenotypeError {
 
-
+	/**
+	 * Main method
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		allGenotypeError();
 	}
 
 
+	/**
+	 *Generates all the possible genotypes
+	 * For each genotype generates all the possible single errors
+	 * For each inheritance state where the genotype is not a SCE nor a MIE, 
+	 * checks if the error is detected as a SCE or a MIE or if the error is not detected 
+	 */
 	public static void allGenotypeError() {
 		CrossTriosInheritanceState identicalState = new CrossTriosInheritanceState(TrioInheritanceState.IDENTICAL, TrioInheritanceState.IDENTICAL);
 		CrossTriosInheritanceState nonIdenticalState = new CrossTriosInheritanceState(TrioInheritanceState.NON_IDENTICAL, TrioInheritanceState.NON_IDENTICAL);
@@ -31,7 +44,8 @@ public class AllGenotypeError {
 
 		for (int currentGenotype = 0; currentGenotype < 256; currentGenotype++) {
 			Variant currentVariant = new Variant(currentGenotype);
-			//if (!isAltRefGenotype(currentVariant)) {
+			// we want to eliminate the 1/0 genotypes since they are equivalent to the 0/1 ones
+			if (!isAltRefGenotype(currentVariant)) {
 				if (!currentVariant.isMIE()) {
 					for (CrossTriosInheritanceState currentState: allStates) {
 						if (!currentVariant.isSCE(currentState)) {
@@ -49,7 +63,7 @@ public class AllGenotypeError {
 						}
 					}
 				}
-			//}
+			}
 		}
 		int errorCount = notDetectedCount + detectedAsMIECount + detectedAsSCECount;
 		double detectedAsMIEPercentage = detectedAsMIECount / (double) errorCount *100d;
@@ -63,6 +77,11 @@ public class AllGenotypeError {
 	}
 
 
+	/**
+	 * @param currentGenotype initial genotype
+	 * @return an array with all the possible error;
+	 * 8 elements, an error can occure at any of the 8 allele
+	 */
 	private static int[] generateErrorGenotypes(int currentGenotype) {
 		int[] errorGenotypes = new int[8];		
 		for (int i = 0; i < 8; i++) {
@@ -71,6 +90,11 @@ public class AllGenotypeError {
 		return errorGenotypes;
 	}
 
+
+	/**
+	 * @param variant
+	 * @return true if one of the familly member has a 1/0 genotype
+	 */
 	private static boolean isAltRefGenotype(Variant variant) {
 		for (QuartetMember currentMember: QuartetMember.values()) {
 			AlleleType[] alleles = variant.getAlleles(currentMember);
