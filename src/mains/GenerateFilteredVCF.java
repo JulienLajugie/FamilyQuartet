@@ -99,7 +99,7 @@ public class GenerateFilteredVCF {
 				} else {
 					try {
 						Variant currentVariant = new Variant(line);
-						if (!currentVariant.isIndel()) {
+						if (!currentVariant.isIndel() && !currentVariant.isMIE()) {
 							if ((segDupList == null) || (!segDupList.isInSegmentalDuplication(currentVariant))) {
 								if ((isBlockList == null) || (isBlockList.getBlock(currentVariant) == null) || (!isBlockList.getBlock(currentVariant).isSCE(currentVariant))) {
 									System.out.println(line);

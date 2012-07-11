@@ -120,19 +120,30 @@ public class SegmentalDuplicationList {
 	 * @return true if the list contains a bock that overlap with the specified {@link SegmentalDuplication} on the specified chromosome
 	 */
 	public boolean containsBlockOverlapping(String chromosome, SegmentalDuplication block) {
+		return getBlockOverlapping(chromosome, block) != null;
+	}
+
+	
+	/**
+	 * @param chromosome a chromosome
+	 * @param block a {@link SegmentalDuplication}
+	 * @return a block that overlap with the specified {@link SegmentalDuplication} on the specified chromosome. Null if there is none
+	 */
+	public SegmentalDuplication getBlockOverlapping(String chromosome, SegmentalDuplication block) {
 		if (segDupListMap.containsKey(chromosome)) {
 			List<SegmentalDuplication> chromosomeBlockList = segDupListMap.get(chromosome);
 			for (SegmentalDuplication currentDuplication: chromosomeBlockList) {
 				if (((block.getStartPosition() >= currentDuplication.getStartPosition()) && (block.getStartPosition() <= currentDuplication.getStopPosition()))
 						|| ((block.getStopPosition() >= currentDuplication.getStartPosition()) && (block.getStopPosition() <= currentDuplication.getStopPosition()))
 						|| ((block.getStartPosition() <= currentDuplication.getStartPosition()) && (block.getStopPosition() >= currentDuplication.getStopPosition()))) {
-					return true;
+					return currentDuplication;
 				}
 			}
 		}
-		return false;
-	}
-
+		return null;
+	}	
+	
+	
 
 	/**
 	 * @return the segmental duplication blocks organized in a map sorted per chromosome

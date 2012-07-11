@@ -104,7 +104,7 @@ public class GenerateBlockStats {
 					try {
 						Variant currentVariant = new Variant(line);
 						if (segDupList == null || !segDupList.isInSegmentalDuplication(currentVariant)) {
-							//if (currentVariant.isIndel()) {
+							if (!currentVariant.isIndel()) {
 								variantCount++;
 								if (currentVariant.isIndel()) {
 									indelCount++;
@@ -113,7 +113,7 @@ public class GenerateBlockStats {
 								if (currentVariantBlock != null) {
 									currentVariantBlock.analyzeVariant(currentVariant);
 								}
-							//}
+							}
 						}
 						//System.out.println(line);
 					} catch (PartiallyCalledVariantException e) {

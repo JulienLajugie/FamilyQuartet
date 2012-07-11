@@ -114,7 +114,7 @@ public class RepairHemizygous {
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
 				if (line.charAt(0) == '#') {
-					//System.out.println(line);
+					System.out.println(line);
 				} else {
 					String correctedLine = line;
 					try {
