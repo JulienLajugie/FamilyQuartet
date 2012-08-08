@@ -275,7 +275,10 @@ public class Variant {
 	private void filterFieldFiltering(String filterField) throws FilteredVCFLineException {
 		switch (FILTER_FIELD_FILTERING) {
 		case NINETY_NINE_POINT_NINE:
-			if (!filterField.equalsIgnoreCase("PASS") && !filterField.equalsIgnoreCase("TruthSensitivityTranche99.00to99.90")) {
+			if (!filterField.equalsIgnoreCase("PASS") && 
+					!filterField.equalsIgnoreCase("TruthSensitivityTranche99.00to99.90") &&
+					!filterField.equalsIgnoreCase("VQSRTrancheSNP99.90to100.00") &&
+					!filterField.equalsIgnoreCase("VQSRTrancheINDEL99.90to100.00")) {				
 				throw new FilteredVCFLineException("Filter Field", filterField);
 			}
 			break;
