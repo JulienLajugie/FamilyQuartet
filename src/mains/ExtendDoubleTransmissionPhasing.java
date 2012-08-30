@@ -66,7 +66,7 @@ public class ExtendDoubleTransmissionPhasing {
 		if (args.length != 4) {
 			return false;
 		}
-		// case with no -bp parameter
+		// case with no -b parameter
 		if (!args[0].equals("-b") && !args[2].equals("-b")) {
 			return false;
 		}
@@ -114,9 +114,9 @@ public class ExtendDoubleTransmissionPhasing {
 								if (!blockState.isCompatibleWith(QuartetInheritanceState.MATERNAL) && !blockState.isCompatibleWith(QuartetInheritanceState.PATERNAL)) {
 									//phasableSCEVariantCount++;
 								} else {
-									if (variant.isPhased(QuartetMember.KID1)) {								
+									if (variant.isHomozygous(QuartetMember.KID1)) {								
 										phaseKid2(variant, blockState);
-									} else {
+									} else if (variant.isHomozygous(QuartetMember.KID2)){	
 										phaseTrioParentsKid1(variant, blockState);
 									}
 									lineToPrint = substituteVcfLine(line, variant);
@@ -150,26 +150,26 @@ public class ExtendDoubleTransmissionPhasing {
 		if (blockState.getPaternalTrioState() != TrioInheritanceState.UNKNOWN) {
 			if (blockState.getPaternalTrioState() == TrioInheritanceState.IDENTICAL) {
 				// case paternal identical
-				variant.phase(QuartetMember.FATHER, child2Alleles, otherAllele);
-				variant.phase(QuartetMember.MOTHER, otherAllele, child2Alleles);
-				variant.phase(QuartetMember.KID1, otherAllele, child2Alleles);				
+				variant.setGenotype(QuartetMember.FATHER, child2Alleles, otherAllele, true);
+				variant.setGenotype(QuartetMember.MOTHER, otherAllele, child2Alleles, true);
+				variant.setGenotype(QuartetMember.KID1, otherAllele, child2Alleles, true);				
 			} else if (blockState.getPaternalTrioState() == TrioInheritanceState.NON_IDENTICAL) {
 				// case paternal non-identical
-				variant.phase(QuartetMember.FATHER, otherAllele, child2Alleles);
-				variant.phase(QuartetMember.MOTHER, child2Alleles, otherAllele);
-				variant.phase(QuartetMember.KID1, child2Alleles, otherAllele);
+				variant.setGenotype(QuartetMember.FATHER, otherAllele, child2Alleles, true);
+				variant.setGenotype(QuartetMember.MOTHER, child2Alleles, otherAllele, true);
+				variant.setGenotype(QuartetMember.KID1, child2Alleles, otherAllele, true);
 			}
 		} else if (blockState.getMaternalTrioState() != TrioInheritanceState.UNKNOWN) {
 			if (blockState.getMaternalTrioState() == TrioInheritanceState.IDENTICAL) {
 				// case maternal identical
-				variant.phase(QuartetMember.FATHER, otherAllele, child2Alleles);
-				variant.phase(QuartetMember.MOTHER, child2Alleles, otherAllele);
-				variant.phase(QuartetMember.KID1, child2Alleles, otherAllele);
+				variant.setGenotype(QuartetMember.FATHER, otherAllele, child2Alleles, true);
+				variant.setGenotype(QuartetMember.MOTHER, child2Alleles, otherAllele, true);
+				variant.setGenotype(QuartetMember.KID1, child2Alleles, otherAllele, true);
 			} else if (blockState.getMaternalTrioState() == TrioInheritanceState.NON_IDENTICAL) {
 				// case paternal non-identical
-				variant.phase(QuartetMember.FATHER, child2Alleles, otherAllele);
-				variant.phase(QuartetMember.MOTHER, otherAllele, child2Alleles);
-				variant.phase(QuartetMember.KID1, otherAllele, child2Alleles);			
+				variant.setGenotype(QuartetMember.FATHER, child2Alleles, otherAllele, true);
+				variant.setGenotype(QuartetMember.MOTHER, otherAllele, child2Alleles, true);
+				variant.setGenotype(QuartetMember.KID1, otherAllele, child2Alleles, true);			
 			}
 		}
 	}
@@ -184,19 +184,19 @@ public class ExtendDoubleTransmissionPhasing {
 		if (blockState.getPaternalTrioState() != TrioInheritanceState.UNKNOWN) {
 			if (blockState.getPaternalTrioState() == TrioInheritanceState.IDENTICAL) {
 				// case paternal identical
-				variant.phase(QuartetMember.KID2, variant.getAlleles(QuartetMember.FATHER)[1], variant.getAlleles(QuartetMember.FATHER)[0]);
+				variant.setGenotype(QuartetMember.KID2, variant.getAlleles(QuartetMember.FATHER)[1], variant.getAlleles(QuartetMember.FATHER)[0], true);
 			} else if (blockState.getPaternalTrioState() == TrioInheritanceState.NON_IDENTICAL) {
 				// case paternal non-identical
-				variant.phase(QuartetMember.KID2, variant.getAlleles(QuartetMember.FATHER)[0], variant.getAlleles(QuartetMember.FATHER)[1]);
+				variant.setGenotype(QuartetMember.KID2, variant.getAlleles(QuartetMember.FATHER)[0], variant.getAlleles(QuartetMember.FATHER)[1], true);
 			}
 		} else if (blockState.getMaternalTrioState() != TrioInheritanceState.UNKNOWN) {
 			// if the father state is unknown we use the mother state for the phasing
 			if (blockState.getMaternalTrioState() == TrioInheritanceState.IDENTICAL) {
 				// case maternal identical
-				variant.phase(QuartetMember.KID2, variant.getAlleles(QuartetMember.MOTHER)[0], variant.getAlleles(QuartetMember.MOTHER)[1]);
+				variant.setGenotype(QuartetMember.KID2, variant.getAlleles(QuartetMember.MOTHER)[0], variant.getAlleles(QuartetMember.MOTHER)[1], true);
 			} else if (blockState.getMaternalTrioState() == TrioInheritanceState.NON_IDENTICAL) {
 				// case maternal non-identical
-				variant.phase(QuartetMember.KID2, variant.getAlleles(QuartetMember.MOTHER)[1], variant.getAlleles(QuartetMember.MOTHER)[0]);
+				variant.setGenotype(QuartetMember.KID2, variant.getAlleles(QuartetMember.MOTHER)[1], variant.getAlleles(QuartetMember.MOTHER)[0], true);
 			}			
 		}
 	}

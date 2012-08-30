@@ -14,6 +14,7 @@ import dataStructures.QuartetMember;
  * Tries to improve the result of a genetic phasing (eg: haplotyping, transmission phasing) 
  * using the result of a physical phasing (ie read back phasing). 
  * @author Julien Lajugie
+ * @deprecated
  */
 public class ExtendPhasingUsingRBP {
 

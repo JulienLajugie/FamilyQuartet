@@ -37,7 +37,7 @@ public class Variant {
 	 * Filter excluding the 3/4 heterozygous genotypes
 	 */
 	private static final boolean USE_FILTER_3QUATER_HETEROZYGOUS_FILTERING = false;
-	/**
+	/** 
 	 * Only consider the genotypes with a score above this threshold as phased
 	 */
 	private static final double PHASING_QUALITY_FILTER_THRESHOLD = 0;
@@ -426,7 +426,7 @@ public class Variant {
 
 
 	/**
-	 * The most frequent allele in the parents is denoted by “a”; in case of equal frequency, “a”
+	 * The most frequent allele in the parents is denoted by ï¿½aï¿½; in case of equal frequency, ï¿½aï¿½
 	 * denotes the most frequent allele in the children.
 	 * @return the type of the most frequent allele (reference or alternate)
 	 */
@@ -632,35 +632,55 @@ public class Variant {
 			return null;
 		}
 	}
+	
+	
+	/**
+	 * Set the phase of a specified quartet member
+	 * @param member a quartet member
+	 * @param isPhased true if the member's genotype is phased
+	 */
+	public void setPhase(QuartetMember member, boolean isPhased) {
+		switch (member) {
+		case FATHER:
+			isFatherPhased = isPhased;
+		case MOTHER:
+			isMotherPhased = isPhased;
+		case KID1:
+			isKid1Phased = isPhased;
+		case KID2:
+			isKid2Phased = isPhased;
+		}
+	}
 
 
 	/**
-	 * Phase the specified quartet member
+	 * Set the genotype of the specified quartet member
 	 * @param member a quarte member
 	 * @param firstAllele first allele of the member (paternal allele in children)
 	 * @param secondAllele second allele of the member (maternal allele in children)
+	 * @param isPhased true if the genotype is phased
 	 */
-	public final void phase(QuartetMember member, AlleleType firstAllele, AlleleType secondAllele) {
+	public final void setGenotype(QuartetMember member, AlleleType firstAllele, AlleleType secondAllele, boolean isPhased) {
 		switch (member) {
 		case FATHER:
 			fatherAlleles[0] = firstAllele;
 			fatherAlleles[1] = secondAllele;
-			isFatherPhased = true;
+			isFatherPhased = isPhased;
 			break;
 		case MOTHER:
 			motherAlleles[0] = firstAllele;
 			motherAlleles[1] = secondAllele;
-			isMotherPhased = true;
+			isMotherPhased = isPhased;
 			break;
 		case KID1:
 			kid1Alleles[0] = firstAllele;
-			kid2Alleles[1] = secondAllele;
-			isKid1Phased = true;
+			kid1Alleles[1] = secondAllele;
+			isKid1Phased = isPhased;
 			break;
 		case KID2:
 			kid2Alleles[0] = firstAllele;
 			kid2Alleles[1] = secondAllele;
-			isKid2Phased = true;
+			isKid2Phased = isPhased;
 			break;
 		}		
 	}
@@ -800,16 +820,16 @@ public class Variant {
 	 * @param member a member of the family
 	 * @return true if variant is a SNP for the specified member 
 	 */
-	public boolean isSNP(QuartetMember member) {
+	public boolean isHomozygousReference(QuartetMember member) {
 		switch (member) {
 		case FATHER:
-			return (fatherAlleles[0] != AlleleType.REFERENCE_ALLELE) || (fatherAlleles[1] != AlleleType.REFERENCE_ALLELE);
+			return (fatherAlleles[0] == AlleleType.REFERENCE_ALLELE) && (fatherAlleles[1] == AlleleType.REFERENCE_ALLELE);
 		case MOTHER:
-			return (motherAlleles[0] != AlleleType.REFERENCE_ALLELE) || (motherAlleles[1] != AlleleType.REFERENCE_ALLELE);
+			return (motherAlleles[0] == AlleleType.REFERENCE_ALLELE) && (motherAlleles[1] == AlleleType.REFERENCE_ALLELE);
 		case KID1:
-			return (kid1Alleles[0] != AlleleType.REFERENCE_ALLELE) || (kid1Alleles[1] != AlleleType.REFERENCE_ALLELE);
+			return (kid1Alleles[0] == AlleleType.REFERENCE_ALLELE) && (kid1Alleles[1] == AlleleType.REFERENCE_ALLELE);
 		case KID2:
-			return (kid2Alleles[0] != AlleleType.REFERENCE_ALLELE) || (kid2Alleles[1] != AlleleType.REFERENCE_ALLELE);
+			return (kid2Alleles[0] == AlleleType.REFERENCE_ALLELE) && (kid2Alleles[1] == AlleleType.REFERENCE_ALLELE);
 		default:
 			return false;
 		}
@@ -886,10 +906,18 @@ public class Variant {
 
 
 	/**
-	 * @return the true if the variant is an indel
+	 * @return true if the variant is an indel
 	 */
 	public boolean isIndel() {
 		return isIndel;
+	}
+	
+	
+	/**
+	 * @return true if the variant is a SNP
+	 */
+	public boolean isSNP() {
+		return !isIndel;
 	}
 
 

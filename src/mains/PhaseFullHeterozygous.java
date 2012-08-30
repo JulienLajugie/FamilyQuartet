@@ -118,7 +118,7 @@ public class PhaseFullHeterozygous {
 						String chromosome = variant.getChromosome();
 						CrossTriosInheritanceStateBlock isBlock = (CrossTriosInheritanceStateBlock) isBlockList.getBlock(variant); 
 						// indels are not phased by the RBP software
-						if (!variant.isIndel() && !variant.isMIE() && ((isBlock.getBlockState() == null) || !variant.isSCE(isBlock.getBlockState()))) {
+						if (!variant.isIndel() && !variant.isMIE() && ((isBlock == null) || (isBlock.getBlockState() == null) || !variant.isSCE(isBlock.getBlockState()))) {
 							if (variant.getGenotypePattern().equals("ab/ab;ab/ab")) {
 								boolean isVariantPhased = false;
 								PhasedVector variantVector = RBPVectors.getPhasedVector(chromosome, variant.getPosition());
@@ -132,8 +132,8 @@ public class PhaseFullHeterozygous {
 										SegmentalDuplication RBPBlock = RBPhasedBlocks.get(member).getBlock(variant.getChromosome(), variant.getPosition());
 										if (RBPBlock != null) {
 											SegmentalDuplication commonBlock = commonPhasedBlocks.get(member).getBlockOverlapping(variant.getChromosome(), RBPBlock); 
-											int commonVariantPosition = commonBlock.getStartPosition();
 											if (commonBlock != null) {
+												int commonVariantPosition = commonBlock.getStartPosition();
 												String RBPGenotype = RBPVectors.getPhasedVector(chromosome, commonVariantPosition).getGenotype(member);
 												String TPGenotype = TPVectors.getPhasedVector(chromosome, commonVariantPosition).getGenotype(member);
 												boolean needToBeInverted = RBPGenotype.equals(TPGenotype);
@@ -151,14 +151,13 @@ public class PhaseFullHeterozygous {
 								}
 								line = phaseVCFLine(line, variantVector);
 							}
-							
 						}
 					} catch (VCFException e) {
 						// do nothing
 					} finally {
 						System.out.println(line);
 					}
-				}				
+				}
 			}
 		} finally {
 			if (reader != null) {
@@ -203,7 +202,7 @@ public class PhaseFullHeterozygous {
 			char kid2Allele1 = vectorToPhase.getGenotype(QuartetMember.KID2).charAt(0);
 			if (((maternalState == TrioInheritanceState.IDENTICAL) && (kid1Allele1 != kid2Allele1)) ||
 					((maternalState == TrioInheritanceState.NON_IDENTICAL) && (kid1Allele1 == kid2Allele1))) {
-				vectorToPhase.invert(QuartetMember.KID1);				
+				vectorToPhase.invert(QuartetMember.KID1);
 			}
 			vectorToPhase.setPhasing(QuartetMember.KID1, true);
 			break;			
@@ -226,7 +225,7 @@ public class PhaseFullHeterozygous {
 			char kid2Allele1 = vectorToPhase.getGenotype(QuartetMember.KID2).charAt(0);
 			if (((maternalState == TrioInheritanceState.IDENTICAL) && (kid1Allele1 != kid2Allele1)) ||
 					((maternalState == TrioInheritanceState.NON_IDENTICAL) && (kid1Allele1 == kid2Allele1))) {
-				vectorToPhase.invert(QuartetMember.KID2);				
+				vectorToPhase.invert(QuartetMember.KID2);
 			}
 			vectorToPhase.setPhasing(QuartetMember.KID2, true);
 		}
@@ -426,6 +425,6 @@ public class PhaseFullHeterozygous {
 			if (reader != null) {
 				reader.close();
 			}
-		}	
+		}
 	}
 }

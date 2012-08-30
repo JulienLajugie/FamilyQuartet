@@ -60,16 +60,16 @@ public class CountSNPVariants {
 						Variant currentVariant = new Variant(line);
 						// we don't process indels variants
 						if ((currentVariant.getReferenceAllele().length() == 1) && (currentVariant.getAlternativeAllele().length() == 1)) {
-							if (currentVariant.isSNP(QuartetMember.FATHER)) {
+							if (!currentVariant.isHomozygousReference(QuartetMember.FATHER)) {
 								fatherSnpCount++;
 							}
-							if (currentVariant.isSNP(QuartetMember.MOTHER)) {
+							if (!currentVariant.isHomozygousReference(QuartetMember.MOTHER)) {
 								motherSnpCount++;
 							}
-							if (currentVariant.isSNP(QuartetMember.KID1)) {
+							if (!currentVariant.isHomozygousReference(QuartetMember.KID1)) {
 								kid1SnpCount++;
 							}
-							if (currentVariant.isSNP(QuartetMember.KID2)) {
+							if (!currentVariant.isHomozygousReference(QuartetMember.KID2)) {
 								kid2SnpCount++;
 							}
 						}

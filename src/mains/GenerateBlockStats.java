@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import dataStructures.CrossTriosInheritanceState;
-import dataStructures.InheritanceStateBlock;
 import dataStructures.InheritanceStateBlockList;
 import dataStructures.InheritanceStateBlockListFactory;
 import dataStructures.SegmentalDuplicationList;
@@ -91,8 +90,13 @@ public class GenerateBlockStats {
 			segDupList.loadBedOrBgr(segDupFile);
 		}
 		int variantCount = 0;
-		int indelCount = 0;
 		int partiallyCalledVariantCount = 0;
+		int snpCount = 0; 
+		int indelCount = 0;
+		int snpMIE = 0;
+		int indelMIE = 0;
+		int snpSCE = 0;
+		int indelSCE = 0;
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(VCFFile));
@@ -104,15 +108,22 @@ public class GenerateBlockStats {
 					try {
 						Variant currentVariant = new Variant(line);
 						if (segDupList == null || !segDupList.isInSegmentalDuplication(currentVariant)) {
-							if (!currentVariant.isIndel()) {
-								variantCount++;
-								if (currentVariant.isIndel()) {
-									indelCount++;
+							variantCount++;
+							if (currentVariant.isIndel()) {
+								indelCount++;
+								if (currentVariant.isMIE()) {
+									indelMIE++;
+								} else if ((blockList.getBlock(currentVariant) != null) && (blockList.getBlock(currentVariant).isSCE(currentVariant))) {
+									indelSCE++;
 								}
-								InheritanceStateBlock<CrossTriosInheritanceState> currentVariantBlock = blockList.getBlock(currentVariant);
-								if (currentVariantBlock != null) {
-									currentVariantBlock.analyzeVariant(currentVariant);
+							} else {
+								snpCount++;
+								if (currentVariant.isMIE()) {
+									snpMIE++;
+								} else if ((blockList.getBlock(currentVariant) != null) && (blockList.getBlock(currentVariant).isSCE(currentVariant))) {
+									snpSCE++;
 								}
+								
 							}
 						}
 						//System.out.println(line);
@@ -124,9 +135,16 @@ public class GenerateBlockStats {
 						// do nothing
 					}					
 				}
-			}	
-			System.out.println("Variant #: " + variantCount + ", Partially Called Variant #: " + partiallyCalledVariantCount + ", SNP #: " + (variantCount - indelCount - partiallyCalledVariantCount) + ", Indel #: " + indelCount);
-			blockList.printGenomeWideStatistics();
+			}
+			System.out.println("variant\tpartiallyCalled\tsnp\tindel\tsnpMIE\tindelMIE\tsnpSCE\tindelSCE");
+			System.out.println(variantCount + "\t" +
+					partiallyCalledVariantCount + "\t\t" +
+					snpCount + "\t" +
+					indelCount + "\t" +
+					snpMIE + "\t" +
+					indelMIE + "\t\t" +
+					snpSCE + "\t" +
+					indelSCE);
 		} finally {
 			if (reader != null) {
 				reader.close();
