@@ -24,7 +24,7 @@ public class Variant {
 	/**
 	 * Value of the PL filter. Set to null to disable
 	 */
-	private static final Integer INDIVIDUALS_PL_MIN_VALUE = null;
+	public static final Integer INDIVIDUALS_PL_MIN_VALUE = 20;
 	/**
 	 * Filter removing all the variant with the filter field different from "PASS"
 	 */
@@ -118,13 +118,13 @@ public class Variant {
 			isFatherPhased = isGenotypePhased(splitLine[9].trim());
 			isMotherPhased = isGenotypePhased(splitLine[10].trim());
 			isKid1Phased = isGenotypePhased(splitLine[11].trim());
-			isKid2Phased = isGenotypePhased(splitLine[12].trim());			
+			isKid2Phased = isGenotypePhased(splitLine[12].trim());
 		}
 		// extract the allele informations
 		fatherAlleles = stringToAlleleTypes(splitLine[9].trim());
-		motherAlleles = stringToAlleleTypes(splitLine[10].trim());		
-		kid1Alleles = stringToAlleleTypes(splitLine[11].trim());		
-		kid2Alleles = stringToAlleleTypes(splitLine[12].trim());		
+		motherAlleles = stringToAlleleTypes(splitLine[10].trim());
+		kid1Alleles = stringToAlleleTypes(splitLine[11].trim());
+		kid2Alleles = stringToAlleleTypes(splitLine[12].trim());
 		// compute the genotype pattern
 		genotypePattern = computeGenotypePattern();		
 		// compute the inheritance states
@@ -161,13 +161,13 @@ public class Variant {
 		this.genotypePattern = computeGenotypePattern();
 		this.quartetInheritanceStates = PatternToInheritanceStates.getInheritanceStates(genotypePattern);
 		this.phasingQualityIndex = 0;
-		//System.out.println(Integer.toBinaryString(currentGenotype) + "\t-->\t" + genotypePattern);		
+		//System.out.println(Integer.toBinaryString(currentGenotype) + "\t-->\t" + genotypePattern);
 	}
 
 
 	/**
 	 * @param currentGenotype genotype represented as a byte with one bit per allele as follow:
-	 * (paternal allele1, paternal allele2, maternal allele1, maternal allele2, kid1 allele1, kid1 allele2, kid2 allele1, kid2 allele2) 
+	 * (paternal allele1, paternal allele2, maternal allele1, maternal allele2, kid1 allele1, kid1 allele2, kid2 allele1, kid2 allele2)
 	 * @param member a {@link QuartetMember}
 	 * @return the 2 alleles of the specified family member
 	 */
@@ -278,13 +278,13 @@ public class Variant {
 			if (!filterField.equalsIgnoreCase("PASS") && 
 					!filterField.equalsIgnoreCase("TruthSensitivityTranche99.00to99.90") &&
 					!filterField.equalsIgnoreCase("VQSRTrancheSNP99.90to100.00") &&
-					!filterField.equalsIgnoreCase("VQSRTrancheINDEL99.90to100.00")) {				
+					!filterField.equalsIgnoreCase("VQSRTrancheINDEL99.90to100.00")) {
 				throw new FilteredVCFLineException("Filter Field", filterField);
 			}
 			break;
 		case PASS:
 			if (!filterField.equalsIgnoreCase("PASS")) {
-				throw new FilteredVCFLineException("Filter Field", filterField);	
+				throw new FilteredVCFLineException("Filter Field", filterField);
 			}
 			break;
 		case NONE:
@@ -316,7 +316,7 @@ public class Variant {
 				if (QD < 8.0) {
 					throw new FilteredVCFLineException("QD", Double.toString(QD));
 				}
-			}			
+			}
 		}
 		// filter on the the HRun field
 		int HRunIndex = infoField.indexOf("HRun=");
@@ -348,7 +348,7 @@ public class Variant {
 			} else {
 				FSStr = FSStr.substring(0, indexSemicolon);
 				double FS = Double.parseDouble(FSStr);
-				//System.out.println("FS=" + FS);	
+				//System.out.println("FS=" + FS);
 				if (FS > 200) {
 					throw new FilteredVCFLineException("FS", Double.toString(FS));
 				}			
@@ -500,7 +500,7 @@ public class Variant {
 			return kid1Pattern + "/" + kid2Pattern;
 		}
 		// last possible case
-		return "ab/ab";		
+		return "ab/ab";
 	}
 
 
@@ -523,7 +523,7 @@ public class Variant {
 		if (kidPattern.equals("aa/bb") || kidPattern.equals("ab/bb") || kidPattern.equals("bb/bb")) {
 			return "aa/ab";
 		}
-		return fatherPattern + "+" + motherPattern;		
+		return fatherPattern + "+" + motherPattern;
 	}
 
 
@@ -540,7 +540,7 @@ public class Variant {
 		alleleCount = getAlleles(QuartetMember.KID1)[0] == allele ? alleleCount + 1 : alleleCount;
 		alleleCount = getAlleles(QuartetMember.KID1)[1] == allele ? alleleCount + 1 : alleleCount;
 		alleleCount = getAlleles(QuartetMember.KID2)[0] == allele ? alleleCount + 1 : alleleCount;
-		alleleCount = getAlleles(QuartetMember.KID2)[1] == allele ? alleleCount + 1 : alleleCount;		
+		alleleCount = getAlleles(QuartetMember.KID2)[1] == allele ? alleleCount + 1 : alleleCount;
 		return alleleCount;
 	}
 
@@ -751,7 +751,7 @@ public class Variant {
 	/**
 	 * Prints the variant on the bedgraph format
 	 */
-	public void printVariantBgrFormat() {		
+	public void printVariantBgrFormat() {
 		System.out.println(this.getChromosome() + "\t" + this.getPosition() + "\t" + (this.getPosition() + 1) + "\t1");		
 	}
 
@@ -946,7 +946,7 @@ public class Variant {
 							|| (getAlleles(QuartetMember.MOTHER)[1] == AlleleType.REFERENCE_ALLELE))) {
 				return "1/1";
 			}
-		}		
+		}
 		return null;
 	}
 

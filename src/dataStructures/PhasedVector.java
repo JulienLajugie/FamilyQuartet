@@ -66,48 +66,48 @@ public class PhasedVector implements Comparable<PhasedVector> {
 			// case sample phased
 			setBit(0, phasedQuartetVector.charAt(0) == 'a');
 			setBit(1, phasedQuartetVector.charAt(1) == 'a');
-			setBit(2, true);			
+			setBit(2, true);
 		} else {
 			// case sample unphased
 			setBit(0, unphasedQuartetVector.charAt(0) == 'a');
 			setBit(1, unphasedQuartetVector.charAt(1) == 'a');
-			setBit(2, false);			
+			setBit(2, false);
 		}
 		// mother
 		if ((phasedQuartetVector.charAt(2) != '.') && (phasedQuartetVector.charAt(3) != '.')) {
 			// case sample phased
 			setBit(3, phasedQuartetVector.charAt(2) == 'a');
 			setBit(4, phasedQuartetVector.charAt(3) == 'a');
-			setBit(5, true);			
+			setBit(5, true);
 		} else {
 			// case sample unphased
 			setBit(3, unphasedQuartetVector.charAt(2) == 'a');
 			setBit(4, unphasedQuartetVector.charAt(3) == 'a');
-			setBit(5, false);			
+			setBit(5, false);
 		}
 		// father
 		if ((phasedQuartetVector.charAt(4) != '.') && (phasedQuartetVector.charAt(5) != '.')) {
 			// case sample phased
 			setBit(6, phasedQuartetVector.charAt(4) == 'a');
 			setBit(7, phasedQuartetVector.charAt(5) == 'a');
-			setBit(8, true);			
+			setBit(8, true);
 		} else {
 			// case sample unphased
 			setBit(6, unphasedQuartetVector.charAt(4) == 'a');
 			setBit(7, unphasedQuartetVector.charAt(5) == 'a');
-			setBit(8, false);			
+			setBit(8, false);
 		}
 		// father
 		if ((phasedQuartetVector.charAt(6) != '.') && (phasedQuartetVector.charAt(7) != '.')) {
 			// case sample phased
 			setBit(9, phasedQuartetVector.charAt(6) == 'a');
 			setBit(10, phasedQuartetVector.charAt(7) == 'a');
-			setBit(11, true);			
+			setBit(11, true);
 		} else {
 			// case sample unphased
 			setBit(9, unphasedQuartetVector.charAt(6) == 'a');
 			setBit(10, unphasedQuartetVector.charAt(7) == 'a');
-			setBit(11, false);			
+			setBit(11, false);
 		}
 	}
 
@@ -188,7 +188,7 @@ public class PhasedVector implements Comparable<PhasedVector> {
 		} else {
 			result += "1";
 		}
-		return result;	
+		return result;
 	}
 
 
@@ -212,7 +212,7 @@ public class PhasedVector implements Comparable<PhasedVector> {
 		} else {
 			result += "1";
 		}
-		return result;	
+		return result;
 	}
 
 
@@ -276,10 +276,10 @@ public class PhasedVector implements Comparable<PhasedVector> {
 			return isSet(11);
 		default:
 			return null;
-		}		
+		}
 	}
-	
-	
+
+
 	/**
 	 * @param member a {@link QuartetMember}
 	 * @return true if the specified member is heterozygous
@@ -307,7 +307,7 @@ public class PhasedVector implements Comparable<PhasedVector> {
 		int bitPosition = -1;
 		switch (quartetMember) {
 		case FATHER:
-			bitPosition = 3;
+			bitPosition = 2;
 			break;
 		case MOTHER:
 			bitPosition = 5;
@@ -321,7 +321,7 @@ public class PhasedVector implements Comparable<PhasedVector> {
 		}
 		if (bitPosition != -1) {
 			setBit(bitPosition, isPhased);
-		}		
+		}
 	}
 
 

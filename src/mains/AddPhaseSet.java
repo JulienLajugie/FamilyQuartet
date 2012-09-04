@@ -110,7 +110,7 @@ public class AddPhaseSet {
 							if (isAtLeastOneMemberPhased) {
 								line = addPhaseSet(line, isBlock, currentVariant);
 							}
-						}						
+						}
 					} catch (VCFException e) {
 						// do nothing
 					} finally {

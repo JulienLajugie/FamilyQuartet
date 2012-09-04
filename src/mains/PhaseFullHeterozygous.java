@@ -23,7 +23,7 @@ import exceptions.VCFException;
 
 
 /**
- * Phases the full heterozygous variants of the TP using the result of the RBP 
+ * Phases the full heterozygous variants of the TP using the result of the RBP
  * @author Julien Lajugie
  */
 public class PhaseFullHeterozygous {
@@ -53,7 +53,7 @@ public class PhaseFullHeterozygous {
 				}				
 			}
 			try {
-				countRBPFullHeterozygous(geneticPhasingFile, physicalPhasingFile, inheritanceBlockFile);
+				phaseFullHeterozygous(geneticPhasingFile, physicalPhasingFile, inheritanceBlockFile);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -89,13 +89,13 @@ public class PhaseFullHeterozygous {
 
 
 	/**
-	 * Counts the number of full heterozygous variants phased using the RBP algorithm
+	 * Phases the full heterozygous variants of the TP using the result of the RBP
 	 * @param geneticPhasingFile file containing the result of the genetic phasing
 	 * @param physicalPhasingFile file containing the result of the physical phasing
 	 * @param inheritanceBlockFile file containing the inheritance state blocks
 	 * @throws IOException
 	 */
-	private static void countRBPFullHeterozygous(File geneticPhasingFile, File physicalPhasingFile, File inheritanceBlockFile) throws IOException {
+	private static void phaseFullHeterozygous(File geneticPhasingFile, File physicalPhasingFile, File inheritanceBlockFile) throws IOException {
 		BufferedReader reader = null;
 		String line = null;
 		Map<QuartetMember, SegmentalDuplicationList> commonPhasedBlocks = createCommonPhasedBlocks(geneticPhasingFile, physicalPhasingFile);
@@ -122,34 +122,36 @@ public class PhaseFullHeterozygous {
 							if (variant.getGenotypePattern().equals("ab/ab;ab/ab")) {
 								boolean isVariantPhased = false;
 								PhasedVector variantVector = RBPVectors.getPhasedVector(chromosome, variant.getPosition());
-								// we unphase the RBP vector
-								for (QuartetMember member: QuartetMember.values()) {
-									variantVector.setPhasing(member, false);
-								}
-								// we try to phase it
-								for (QuartetMember member: QuartetMember.values()) {
-									if (!isVariantPhased) {
-										SegmentalDuplication RBPBlock = RBPhasedBlocks.get(member).getBlock(variant.getChromosome(), variant.getPosition());
-										if (RBPBlock != null) {
-											SegmentalDuplication commonBlock = commonPhasedBlocks.get(member).getBlockOverlapping(variant.getChromosome(), RBPBlock); 
-											if (commonBlock != null) {
-												int commonVariantPosition = commonBlock.getStartPosition();
-												String RBPGenotype = RBPVectors.getPhasedVector(chromosome, commonVariantPosition).getGenotype(member);
-												String TPGenotype = TPVectors.getPhasedVector(chromosome, commonVariantPosition).getGenotype(member);
-												boolean needToBeInverted = RBPGenotype.equals(TPGenotype);
-												if (needToBeInverted) {
-													variantVector.invert(member);
-												}
-												variantVector.setPhasing(member, true);
-												if (isBlock != null) {
-													isVariantPhased = true;
-													phaseFamily(member, variantVector, isBlock.getBlockState());
+								if (variantVector != null) {
+									// we unphase the RBP vector
+									for (QuartetMember member: QuartetMember.values()) {
+										variantVector.setPhasing(member, false);
+									}
+									// we try to phase it
+									for (QuartetMember member: QuartetMember.values()) {
+										if (!isVariantPhased) {
+											SegmentalDuplication RBPBlock = RBPhasedBlocks.get(member).getBlock(variant.getChromosome(), variant.getPosition());
+											if (RBPBlock != null) {
+												SegmentalDuplication commonBlock = commonPhasedBlocks.get(member).getBlockOverlapping(variant.getChromosome(), RBPBlock); 
+												if (commonBlock != null) {
+													int commonVariantPosition = commonBlock.getStartPosition();
+													String RBPGenotype = RBPVectors.getPhasedVector(chromosome, commonVariantPosition).getGenotype(member);
+													String TPGenotype = TPVectors.getPhasedVector(chromosome, commonVariantPosition).getGenotype(member);
+													boolean needToBeInverted = !RBPGenotype.equals(TPGenotype);
+													if (needToBeInverted) {
+														variantVector.invert(member);
+													}
+													variantVector.setPhasing(member, true);
+													if (isBlock != null) {
+														isVariantPhased = true;
+														phaseFamily(member, variantVector, isBlock.getBlockState());
+													}
 												}
 											}
 										}
 									}
+									line = phaseVCFLine(line, variantVector);
 								}
-								line = phaseVCFLine(line, variantVector);
 							}
 						}
 					} catch (VCFException e) {
@@ -176,7 +178,7 @@ public class PhaseFullHeterozygous {
 	private static void phaseFamily(QuartetMember phasedMember, PhasedVector vectorToPhase, CrossTriosInheritanceState inheritanceState) {
 		TrioInheritanceState maternalState = inheritanceState.getMaternalTrioState();
 		if (maternalState == TrioInheritanceState.UNKNOWN) {
-			// a ab/ab;ab/ab variant not SCE can only be identical or non-identical which implies that the maternal and paternal states are indentical
+			// a ab/ab;ab/ab variant not SCE can only be identical or non-identical which implies that the maternal and paternal states are identical
 			maternalState = inheritanceState.getPaternalTrioState();
 		}
 		assert (maternalState == TrioInheritanceState.IDENTICAL) || (maternalState == TrioInheritanceState.NON_IDENTICAL);
@@ -205,7 +207,7 @@ public class PhaseFullHeterozygous {
 				vectorToPhase.invert(QuartetMember.KID1);
 			}
 			vectorToPhase.setPhasing(QuartetMember.KID1, true);
-			break;			
+			break;
 		}
 		// we now phase the remaining of the familly
 		if (!vectorToPhase.isPhased(QuartetMember.FATHER)) {
@@ -228,6 +230,9 @@ public class PhaseFullHeterozygous {
 				vectorToPhase.invert(QuartetMember.KID2);
 			}
 			vectorToPhase.setPhasing(QuartetMember.KID2, true);
+		}
+		if (!vectorToPhase.isPhased(QuartetMember.FATHER)) {
+			System.out.println("oufdsoufsajgbfiasgfiasuhf");
 		}
 	}
 

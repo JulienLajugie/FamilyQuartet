@@ -90,6 +90,7 @@ public class MarkSceMieRdfVariants {
 	 * Adds a MIE or SCE flags to the info field of the VCF file for the SCE and MIEvariants
 	 * @param VCFFile VCF files with the variants of the family quartet
 	 * @param blockFile block files in a bgr format
+	 * @param segDupFile file with the segmental duplications
 	 * @throws IOException if the VCF file is not valid
 	 */
 	private static void markSCEMIESegDup(File VCFFile, File blockFile, File segDupFile) throws IOException {

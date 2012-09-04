@@ -91,7 +91,7 @@ public class PhaseByTransmission {
 		try {
 			reader = new BufferedReader(new FileReader(vcfFile));
 			String line = null;
-			// loop until eof 
+			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
 				String lineToPrint = line;

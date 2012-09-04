@@ -17,7 +17,7 @@ import exceptions.VCFException;
  */
 public class ComputePhasingStats {
 
-	
+
 	/**
 	 * Usage: java ComputePhasingStats.java -f <path to the file>
 	 * @param args -f <path to the file>
@@ -67,45 +67,46 @@ public class ComputePhasingStats {
 				if (line.charAt(0) != '#') {
 					try {
 						Variant currentVariant = new Variant(line);
-						if (currentVariant.isPhased(QuartetMember.FATHER)) {
-							fatherPhased++;
-							if (currentVariant.isHeterozygous(QuartetMember.FATHER)) {
-								fatherHeteroPhased++;
+						if (currentVariant.isSNP()) {
+							if (currentVariant.isPhased(QuartetMember.FATHER)) {
+								fatherPhased++;
+								if (currentVariant.isHeterozygous(QuartetMember.FATHER)) {
+									fatherHeteroPhased++;
+								}
+							} else {
+								fatherUnphased++;
 							}
-						} else {
-							fatherUnphased++;
-						}
-						if (currentVariant.isPhased(QuartetMember.MOTHER)) {
-							motherPhased++;
-							if (currentVariant.isHeterozygous(QuartetMember.MOTHER)) {
-								motherHeteroPhased++;
+							if (currentVariant.isPhased(QuartetMember.MOTHER)) {
+								motherPhased++;
+								if (currentVariant.isHeterozygous(QuartetMember.MOTHER)) {
+									motherHeteroPhased++;
+								}
+							} else {
+								motherUnphased++;
 							}
-						} else {
-							motherUnphased++;
-						}
-						if (currentVariant.isPhased(QuartetMember.KID1)) {
-							kid1Phased++;
-							if (currentVariant.isHeterozygous(QuartetMember.KID1)) {
-								kid1HeteroPhased++;
+							if (currentVariant.isPhased(QuartetMember.KID1)) {
+								kid1Phased++;
+								if (currentVariant.isHeterozygous(QuartetMember.KID1)) {
+									kid1HeteroPhased++;
+								}
+							} else {
+								kid1Unphased++;
 							}
-						} else {
-							kid1Unphased++;
-						}
-						if (currentVariant.isPhased(QuartetMember.KID2)) {
-							kid2Phased++;
-							if (currentVariant.isHeterozygous(QuartetMember.KID2)) {
-								kid2HeteroPhased++;
+							if (currentVariant.isPhased(QuartetMember.KID2)) {
+								kid2Phased++;
+								if (currentVariant.isHeterozygous(QuartetMember.KID2)) {
+									kid2HeteroPhased++;
+								}
+							} else {
+								kid2Unphased++;
 							}
-						} else {
-							kid2Unphased++;
-						}
-						if (currentVariant.getGenotypePattern().equals("ab/ab;ab/ab")) {
-							quadrupleHeterozygous++;
-							
+							if (currentVariant.getGenotypePattern().equals("ab/ab;ab/ab")) {
+								quadrupleHeterozygous++;
+							}
 						}
 					} catch (VCFException e) {
 						// do nothing
-					}	
+					}
 				}
 			}
 			System.out.println("Sample\tunphased\tphased\thetero_phased");
@@ -118,6 +119,6 @@ public class ComputePhasingStats {
 			if (reader != null) {
 				reader.close();
 			}
-		}	
-	}	
+		}
+	}
 }
