@@ -112,7 +112,7 @@ public class MarkSceMieRdfVariants {
 					} else if (infoStarted) {
 						System.out.println(MIE_INFO_HEADER);
 						System.out.println(SCE_INFO_HEADER + blockFile.getPath() + INFO_HEADER_END);
-						System.out.println(RDF_INFO_HEADER + blockFile.getPath() + INFO_HEADER_END);
+						System.out.println(RDF_INFO_HEADER + segDupFile.getPath() + INFO_HEADER_END);
 						infoStarted= false;
 					}
 					System.out.println(line);

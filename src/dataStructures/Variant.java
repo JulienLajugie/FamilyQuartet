@@ -24,7 +24,7 @@ public class Variant {
 	/**
 	 * Value of the PL filter. Set to null to disable
 	 */
-	public static final Integer INDIVIDUALS_PL_MIN_VALUE = 20;
+	public static final Integer INDIVIDUALS_PL_MIN_VALUE = null;
 	/**
 	 * Filter removing all the variant with the filter field different from "PASS"
 	 */
@@ -50,7 +50,6 @@ public class Variant {
 	private final int 						position;					// position of the variant
 	private final String 					referenceAllele;			// reference allele of the variant
 	private final String 					alternatievAllele;			// alternative allele of the variant
-	private final boolean					isIndel;					// true if the variant is an indel
 	private final AlleleType[] 				fatherAlleles;				// alleles of the father
 	private final AlleleType[] 				motherAlleles;				// alleles of the mother
 	private final AlleleType[] 				kid1Alleles;				// alleles of the 1st kid
@@ -87,7 +86,6 @@ public class Variant {
 		position = Integer.parseInt(splitLine[1].trim());
 		referenceAllele = splitLine[3].trim();
 		alternatievAllele = splitLine[4].trim();
-		isIndel = isIndel(referenceAllele, alternatievAllele);
 		// filter using the some of the individual quality scores
 		if (USE_INDIVIDUALS_SCORE_FILTERING) {
 			double score = stringToQualityScore(splitLine[9].trim());
@@ -157,7 +155,6 @@ public class Variant {
 		this.motherAlleles = byteToAlleleType(currentGenotype, QuartetMember.MOTHER);
 		this.kid1Alleles = byteToAlleleType(currentGenotype, QuartetMember.KID1);
 		this.kid2Alleles = byteToAlleleType(currentGenotype, QuartetMember.KID2);
-		this.isIndel = false;
 		this.genotypePattern = computeGenotypePattern();
 		this.quartetInheritanceStates = PatternToInheritanceStates.getInheritanceStates(genotypePattern);
 		this.phasingQualityIndex = 0;
@@ -883,22 +880,15 @@ public class Variant {
 
 
 	/**
-	 * @param referenceAllele reference allele of the variant
-	 * @param alternatievAllele alternative allele of the variant
-	 * @return true if the variant is an indel, false otherwise
+	 * @return true if the variant is an indel
 	 */
-	private boolean isIndel(String referenceAllele, String alternatievAllele) {
-		String[] splitReferenceAllele = referenceAllele.split(",");
+	public boolean isIndel() {
 		String[] splitAlternativeAllele = alternatievAllele.split(",");
+		int referenceLength = referenceAllele.length();
 		boolean isIndel = false;
 		int i = 0;
-		while (!isIndel && i < splitReferenceAllele.length) {
-			isIndel = splitReferenceAllele[i].trim().length() > 1;
-			i++;
-		}
-		i = 0;
 		while (!isIndel && i < splitAlternativeAllele.length) {
-			isIndel = splitAlternativeAllele[i].trim().length() > 1;
+			isIndel = splitAlternativeAllele[i].trim().length() != referenceLength;
 			i++;
 		}
 		return isIndel;
@@ -906,18 +896,51 @@ public class Variant {
 
 
 	/**
-	 * @return true if the variant is an indel
+	 * @return true if the variant is an insertion
 	 */
-	public boolean isIndel() {
-		return isIndel;
+	public boolean isInsertion() {
+		String[] splitAlternativeAllele = alternatievAllele.split(",");
+		int referenceLength = referenceAllele.length();
+		boolean isInsertion = false;
+		int i = 0;
+		while (!isInsertion && i < splitAlternativeAllele.length) {
+			isInsertion = splitAlternativeAllele[i].trim().length() > referenceLength;
+			i++;
+		}
+		return isInsertion;
 	}
-	
-	
+
+
+	/**
+	 * @return true if the variant is a deletion
+	 */
+	public boolean isDeletion() {
+		String[] splitAlternativeAllele = alternatievAllele.split(",");
+		int referenceLength = referenceAllele.length();
+		boolean isDeletion = false;
+		int i = 0;
+		while (!isDeletion && i < splitAlternativeAllele.length) {
+			isDeletion = splitAlternativeAllele[i].trim().length() < referenceLength;
+			i++;
+		}
+		return isDeletion;
+
+	}
+
+
 	/**
 	 * @return true if the variant is a SNP
 	 */
 	public boolean isSNP() {
-		return !isIndel;
+		String[] splitAlternativeAllele = alternatievAllele.split(",");
+		int referenceLength = referenceAllele.length();
+		boolean isSNP = false;
+		int i = 0;
+		while (!isSNP && i < splitAlternativeAllele.length) {
+			isSNP = splitAlternativeAllele[i].trim().length() == referenceLength;
+			i++;
+		}
+		return isSNP;
 	}
 
 

@@ -113,8 +113,12 @@ public class ComputeErrorRateFromIdBlocks {
 										&& (blockList.getBlock(currentVariant).getBlockState().getPaternalTrioState() == TrioInheritanceState.IDENTICAL)) {
 									variantCount++;
 									if (!currentVariant.areChildrenIdentical()) {
+										if (currentVariant.isMIE()) {
+										currentVariant.printVariantBgrFormat();
+										System.out.println(currentVariant.getGenotypePattern());
+										}
 										SCEErrorCount = blockList.getBlock(currentVariant).isSCE(currentVariant) ? SCEErrorCount + 1 : SCEErrorCount;
-										MIEErrorCount = (currentVariant.getInheritanceStates()[0] == QuartetInheritanceState.MIE) ? MIEErrorCount + 1 : MIEErrorCount;  
+										MIEErrorCount = (currentVariant.getInheritanceStates()[0] == QuartetInheritanceState.MIE) ? MIEErrorCount + 1 : MIEErrorCount;
 										errorCount++;
 									}
 								}
@@ -122,7 +126,7 @@ public class ComputeErrorRateFromIdBlocks {
 						}
 					} catch (VCFException e) {
 						// do nothing
-					}				
+					}
 				}
 			}
 			System.out.println("Variant Count=" + variantCount + ", Error Count=" + errorCount + ", Error Rate=" + (errorCount / (double) variantCount * 100d) + '%');
