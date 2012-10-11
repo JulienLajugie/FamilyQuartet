@@ -42,23 +42,41 @@ public class AllGenotypeError {
 		int detectedAsSCECount = 0;
 		int notDetectedCount = 0;
 
+		int parentError = 0;
+		int kidsError = 0;
+		int test = 1;
 		for (int currentGenotype = 0; currentGenotype < 256; currentGenotype++) {
 			Variant currentVariant = new Variant(currentGenotype);
 			// we want to eliminate the 1/0 genotypes since they are equivalent to the 0/1 ones
 			if (!isAltRefGenotype(currentVariant)) {
+
 				if (!currentVariant.isMIE()) {
 					for (CrossTriosInheritanceState currentState: allStates) {
+						
+					//CrossTriosInheritanceState currentState = paternalIdenticalState;
 						if (!currentVariant.isSCE(currentState)) {
+							System.out.println(test++);
+
 							int[] errorFromCurrentGenotype = generateErrorGenotypes(currentGenotype);
+							int indexError = 0;
 							for (int currentErrorGenotype: errorFromCurrentGenotype) {
 								Variant currentErrorVariant = new Variant(currentErrorGenotype);
+		
 								if (currentErrorVariant.isMIE()) {
+
 									detectedAsMIECount++;
 								} else if (currentErrorVariant.isSCE(currentState)) {
+
 									detectedAsSCECount++;
 								} else {
+									if (indexError >= 4) {
+										parentError++;
+									} else {
+										kidsError++;
+									}
 									notDetectedCount++;
 								}
+								indexError++;
 							}
 						}
 					}
@@ -74,6 +92,9 @@ public class AllGenotypeError {
 		System.out.println("Error detected as MIE#:\t" + detectedAsMIECount + "\t%:\t" + detectedAsMIEPercentage);
 		System.out.println("Error detected as SCE#:\t" + detectedAsSCECount + "\t%:\t" + detectedAsSCEPercentage);
 		System.out.println("Error Not detected#:\t" + notDetectedCount + "\t%:\t" + notDetectedPercentage);
+		
+		System.out.println("parent Errors = " + parentError);
+		System.out.println("kids Errors = " + kidsError);
 	}
 
 
@@ -83,7 +104,7 @@ public class AllGenotypeError {
 	 * 8 elements, an error can occure at any of the 8 allele
 	 */
 	private static int[] generateErrorGenotypes(int currentGenotype) {
-		int[] errorGenotypes = new int[8];		
+		int[] errorGenotypes = new int[8];
 		for (int i = 0; i < 8; i++) {
 			errorGenotypes[i] = (currentGenotype ^ (0x1 << i));
 		}

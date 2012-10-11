@@ -24,7 +24,7 @@ public class Variant {
 	/**
 	 * Value of the PL filter. Set to null to disable
 	 */
-	public static final Integer INDIVIDUALS_PL_MIN_VALUE = null;
+	public static final Integer INDIVIDUALS_PL_MIN_VALUE = 20;
 	/**
 	 * Filter removing all the variant with the filter field different from "PASS"
 	 */

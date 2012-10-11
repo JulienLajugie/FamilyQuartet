@@ -19,23 +19,23 @@ import exceptions.VCFException;
 
 
 /**
- * Computes the error rate by computing how many times the kids are different in identical blocks 
+ * Computes the error rate by computing the number of SCE and MIE in non identical blocks (since MIE and SCE are all detectable in these blocks)
  * @author Julien Lajugie
  */
-public class ComputeErrorRateFromIdBlocks {
+public class ComputeErrorRateFromNonIdBlocks {
 
 
 	/**
-	 * Usage: java ComputeErrorRateFromIdBlocks.java -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>
+	 * Usage: java ComputeErrorRateFromNonIdBlocks.java -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>
 	 * @param args -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>
 	 */
 	public static void main(String[] args) {
 		// exit the program if the input parameters are not correct
 		if (!areParametersValid(args)) { 
-			System.out.println("Usage: java ComputeErrorRateFromIdBlocks.java -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>");
+			System.out.println("Usage: java ComputeErrorRateFromNonIdBlocks.java -v <path to the VCF file> -b <path to the block file> -s <segmental duplication file (optional)>");
 			System.exit(-1);
 		} else {
-			try {
+			try {				
 				File VCFFile = null;
 				File blockFile = null;
 				File segDupFile = null;
@@ -44,11 +44,11 @@ public class ComputeErrorRateFromIdBlocks {
 						VCFFile = new File(args[i + 1]);
 					} else if (args[i].equals("-b")) {
 						blockFile = new File(args[i + 1]);
-					} else if (args[i].equals("-s")) {
+					} else if (args[i].equals("-s")) {			
 						segDupFile = new File(args[i + 1]);
-					}
+					}					
 				}
-				computeErrorRateFromIdBlocks(VCFFile, blockFile, segDupFile);
+				computeErrorRateFromNonIdBlocks(VCFFile, blockFile, segDupFile);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -67,7 +67,7 @@ public class ComputeErrorRateFromIdBlocks {
 		if ((args.length != 4) && (args.length != 6)) {
 			return false;
 		}
-		if ((args[0].equals("-v") && args[2].equals("-b"))
+		if ((args[0].equals("-v") && args[2].equals("-b")) 
 				|| (args[0].equals("-b") && args[2].equals("-v"))) {
 			return true;
 		} else {
@@ -77,13 +77,13 @@ public class ComputeErrorRateFromIdBlocks {
 
 
 	/**
-	 * Computes the error rate by computing how many times the kids are different in identical blocks
+	 * Computes the error rate by computing the number of SCE and MIE in non identical blocks (since MIE and SCE are all detectable in these blocks)
 	 * @param VCFFile VCF files with the variants of the family quartet
 	 * @param blockFile block files from the ISCA software (Roach et Al)
 	 * @param segDupFile bed or bgr file containing the segmental duplication. Variants in these regions will be excluded.  Can be null
 	 * @throws IOException if the VCF file is not valid
 	 */
-	private static void computeErrorRateFromIdBlocks(File VCFFile, File blockFile, File segDupFile) throws IOException {
+	private static void computeErrorRateFromNonIdBlocks(File VCFFile, File blockFile, File segDupFile) throws IOException {
 		InheritanceStateBlockList<CrossTriosInheritanceState> blockList;
 		blockList = InheritanceStateBlockListFactory.createFromCrossTriosBgrFile(blockFile);
 		SegmentalDuplicationList segDupList = null;
@@ -96,10 +96,9 @@ public class ComputeErrorRateFromIdBlocks {
 			reader = new BufferedReader(new FileReader(VCFFile));
 			String line = null;
 			int variantCount = 0;
-			int errorCount = 0;
 			int MIEErrorCount = 0;
 			int SCEErrorCount = 0;
-			long identicalBlocksLength = countIdenticalBlockLength(blockList);
+			long identicalBlocksLength = countNonIdenticalBlockLength(blockList);
 			// loop until eof
 			while ((line = reader.readLine()) != null) {
 				// a line starting with a # is a comment line
@@ -110,14 +109,11 @@ public class ComputeErrorRateFromIdBlocks {
 							if (!currentVariant.isIndel()) {
 								InheritanceStateBlock<CrossTriosInheritanceState> currentBlock = blockList.getBlock(currentVariant);
 								if ((currentBlock != null)
-										&& (currentBlock.getBlockState().getMaternalTrioState() == TrioInheritanceState.IDENTICAL) 
-										&& (currentBlock.getBlockState().getPaternalTrioState() == TrioInheritanceState.IDENTICAL)) {
+										&& (currentBlock.getBlockState().getMaternalTrioState() == TrioInheritanceState.NON_IDENTICAL) 
+										&& (currentBlock.getBlockState().getPaternalTrioState() == TrioInheritanceState.NON_IDENTICAL)) {
 									variantCount++;
-									if (!currentVariant.areChildrenIdentical()) {
 										SCEErrorCount = currentVariant.isSCE(currentBlock.getBlockState()) ? SCEErrorCount + 1 : SCEErrorCount;
 										MIEErrorCount = currentVariant.isMIE() ? MIEErrorCount + 1 : MIEErrorCount;
-										errorCount++;
-									}
 								}
 							}
 						}
@@ -126,10 +122,11 @@ public class ComputeErrorRateFromIdBlocks {
 					}
 				}
 			}
+			int errorCount = MIEErrorCount + SCEErrorCount;
 			System.out.println("Variant Count=" + variantCount + ", Error Count=" + errorCount + ", Error Rate=" + (errorCount / (double) variantCount * 100d) + '%');
 			System.out.println("MIE Error Count=" + MIEErrorCount + ", MIE Error %=" + (MIEErrorCount / (double) errorCount * 100d) + '%');
 			System.out.println("SCE Error Count=" + SCEErrorCount + ", SCE Error %=" + (SCEErrorCount / (double) errorCount * 100d) + '%');
-			System.out.println("Identical blocks total length=" + identicalBlocksLength + ", Identical Blocks Error Rate=" + (errorCount / (double) identicalBlocksLength));
+			System.out.println("Non Identical blocks total length=" + identicalBlocksLength + ", Identical Blocks Error Rate=" + (errorCount / (double) identicalBlocksLength));
 		} finally {
 			if (reader != null) {
 				reader.close();
@@ -140,15 +137,15 @@ public class ComputeErrorRateFromIdBlocks {
 
 	/**
 	 * @param blockList
-	 * @return the sum of the length of the identical blocks
+	 * @return the sum of the length of the non identical blocks
 	 */
-	private static final long countIdenticalBlockLength(InheritanceStateBlockList<CrossTriosInheritanceState> blockList) {
+	private static final long countNonIdenticalBlockLength(InheritanceStateBlockList<CrossTriosInheritanceState> blockList) {
 		Collection<List<InheritanceStateBlock<CrossTriosInheritanceState>>> blockListCollection = blockList.getBlocks().values();
 		long identicalBlockLength = 0;
 		for (List<InheritanceStateBlock<CrossTriosInheritanceState>> currentList: blockListCollection) {
 			for (InheritanceStateBlock<CrossTriosInheritanceState> currentBlock: currentList) {
-				if ((currentBlock.getBlockState().getMaternalTrioState() == TrioInheritanceState.IDENTICAL) && 
-						(currentBlock.getBlockState().getPaternalTrioState() == TrioInheritanceState.IDENTICAL)) {
+				if ((currentBlock.getBlockState().getMaternalTrioState() == TrioInheritanceState.NON_IDENTICAL) && 
+						(currentBlock.getBlockState().getPaternalTrioState() == TrioInheritanceState.NON_IDENTICAL)) {
 					identicalBlockLength += (currentBlock.getStopPosition() - currentBlock.getStartPosition());
 				}
 			}
