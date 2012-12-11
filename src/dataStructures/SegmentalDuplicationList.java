@@ -57,6 +57,39 @@ public class SegmentalDuplicationList {
 			}
 		}
 	}
+	
+	
+	/**
+	 * @param file bed or bgr file
+	 * @throws IOException
+	 */
+	public void loadBedOrBgrWithScore(File file) throws IOException {
+		BufferedReader reader = null;
+		try {
+			reader = new BufferedReader(new FileReader(file));
+			String line = null;
+			// loop until eof
+			while ((line = reader.readLine()) != null) {
+				// we don't care about the comment lines 
+				if ((line.trim().charAt(0) != '#') && 
+						((line.length() < 5) || (!line.substring(0, 5).equalsIgnoreCase("track"))) && 
+						((line.length() < 7) || (!line.substring(0, 7).equalsIgnoreCase("browser")))) {
+					String[] splitLine = line.split("\t");
+					String chromosome = splitLine[0].trim();
+					int startPosition = Integer.parseInt(splitLine[1].trim());
+					int stopPosition = Integer.parseInt(splitLine[2].trim());
+					double score = Double.parseDouble(splitLine[3].trim());
+					SegmentalDuplication segDupToAdd = new SegmentalDuplication(startPosition, stopPosition, score);
+					addDuplication(chromosome, segDupToAdd);
+				}
+			}
+			sort();
+		} finally {
+			if (reader != null) {
+				reader.close();
+			}
+		}
+	}
 
 
 	/**

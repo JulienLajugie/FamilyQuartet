@@ -123,7 +123,6 @@ public class GenerateBlockStats {
 								} else if ((blockList.getBlock(currentVariant) != null) && (blockList.getBlock(currentVariant).isSCE(currentVariant))) {
 									snpSCE++;
 								}
-								
 							}
 						}
 						//System.out.println(line);
@@ -133,7 +132,7 @@ public class GenerateBlockStats {
 						partiallyCalledVariantCount++;
 					} catch (VCFException e) {
 						// do nothing
-					}					
+					}
 				}
 			}
 			System.out.println("variant\tpartiallyCalled\tsnp\tindel\tsnpMIE\tindelMIE\tsnpSCE\tindelSCE");

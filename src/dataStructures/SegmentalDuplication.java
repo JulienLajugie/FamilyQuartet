@@ -6,9 +6,9 @@ package dataStructures;
  */
 public class SegmentalDuplication implements Comparable<SegmentalDuplication> {
 
-	private final int 	startPosition;		// start position
-	private final int 	stopPosition;		// stop position	
-	
+	private final int 		startPosition;		// start position
+	private final int 		stopPosition;		// stop position	
+	private final double	score;				// score
 	
 	/**
 	 * Creates an instance of {@link SegmentalDuplication}
@@ -16,11 +16,22 @@ public class SegmentalDuplication implements Comparable<SegmentalDuplication> {
 	 * @param stopPosition stop position of the segmental duplication
 	 */
 	public SegmentalDuplication(int startPosition, int stopPosition) {
+		this(startPosition, stopPosition, 0);
+	}
+	
+	/**
+	 * Creates an instance of {@link SegmentalDuplication}
+	 * @param startPosition start position of the segmental duplication
+	 * @param stopPosition stop position of the segmental duplication
+	 * @param score score of the duplication
+	 */
+	public SegmentalDuplication(int startPosition, int stopPosition, double score) {
 		this.startPosition = startPosition;
 		this.stopPosition = stopPosition;
+		this.score = score;		
 	}
 
-	
+
 	/**
 	 * @return the start position of the segmental duplication
 	 */
@@ -36,6 +47,14 @@ public class SegmentalDuplication implements Comparable<SegmentalDuplication> {
 		return stopPosition;
 	}
 
+	
+	/**
+	 * @return the score of the segmental duplication
+	 */
+	public double getScore() {
+		return score;
+	}
+	
 
 	@Override
 	public int compareTo(SegmentalDuplication o) {
