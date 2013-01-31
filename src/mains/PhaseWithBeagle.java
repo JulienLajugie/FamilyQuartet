@@ -29,7 +29,7 @@ public class PhaseWithBeagle {
 	 */
 	public static void main(String[] args) {
 		// exit the program if the input parameters are not correct
-		if (!areParametersValid(args)) { 
+		if (!areParametersValid(args)) {
 			System.out.println("Usage: java PhaseWithBeagle -v <path to the VCF file> -b <path to the block file> -p <path to the beagle paternal block file> -m <path to the beagle maternal block file>");
 			System.exit(-1);
 		} else {
@@ -146,7 +146,7 @@ public class PhaseWithBeagle {
 							// check if the kid1 paternal allele changed
 							SegmentalDuplication currentPaternalBeagleBlock = paternalBeagleBlocks.getBlock(currentChromo, variant.getPosition());
 							if ((currentPaternalBeagleBlock != null) && !currentPaternalBeagleBlock.equals(previousPaternalBeagleBlock)) {
-								if ((previousPaternalBeagleBlock != null) && currentPaternalBeagleBlock.getScore() != previousPaternalBeagleBlock.getScore()) {
+								if ((previousPaternalBeagleBlock != null) && (currentPaternalBeagleBlock.getScore() != previousPaternalBeagleBlock.getScore())) {
 									kid1PA = invertGenotype(kid1PA);
 								}
 								previousPaternalBeagleBlock = currentPaternalBeagleBlock;
@@ -154,7 +154,7 @@ public class PhaseWithBeagle {
 							// check if the kid1 maternal allele changed
 							SegmentalDuplication currentMaternalBeagleBlock = maternalBeagleBlocks.getBlock(currentChromo, variant.getPosition());
 							if ((currentMaternalBeagleBlock != null) && !currentMaternalBeagleBlock.equals(previousMaternalBeagleBlock)) {
-								if ((previousMaternalBeagleBlock != null) && currentMaternalBeagleBlock.getScore() != previousMaternalBeagleBlock.getScore()) {
+								if ((previousMaternalBeagleBlock != null) && (currentMaternalBeagleBlock.getScore() != previousMaternalBeagleBlock.getScore())) {
 									kid1MA = invertGenotype(kid1MA);
 								}
 								previousMaternalBeagleBlock = currentMaternalBeagleBlock;
@@ -166,7 +166,7 @@ public class PhaseWithBeagle {
 							boolean invertDad = paternalBeagleBlocks.getBlock(variant.getChromosome(), variant.getPosition()).getScore() == -1;
 							// check if the mom genotype needs to be changed
 							boolean invertMom = maternalBeagleBlocks.getBlock(variant.getChromosome(), variant.getPosition()).getScore() == -1;
-							line = addPhaseSet(line, invertDad, invertMom, kid1PA, kid1MA, kid2PA, kid2MA);
+							line = addAncestralAllele(line, invertDad, invertMom, kid1PA, kid1MA, kid2PA, kid2MA);
 							previousChromo = currentChromo;
 						}
 					} catch (Exception e) {
@@ -199,7 +199,7 @@ public class PhaseWithBeagle {
 			// return P? or M?
 			return kid1Parental.charAt(0) + "?";
 		case NON_IDENTICAL:
-			// in this case kid 2 as the opposite parental allele as kid1 
+			// in this case kid 2 as the opposite parental allele as kid1
 			return invertParentalAllele(kid1Parental);
 		default:
 			// shouldn't happen
@@ -221,16 +221,22 @@ public class PhaseWithBeagle {
 	}
 
 	/**
-	 * @param line vcf line 
+	 * @param line vcf line
 	 * @param isBlock block of the current variant
 	 * @param variant variant of the vcf line
 	 * @return the vcf line with the parental blocks phased and name the allele in the VCF file
 	 */
-	private static String addPhaseSet(String line, boolean invertDad, boolean invertMom, String kid1PA, String kid1MA, String kid2PA, String kid2MA) {
+	private static String addAncestralAllele(String line, boolean invertDad, boolean invertMom, String kid1PA, String kid1MA, String kid2PA, String kid2MA) {
 		String[] splitLine = line.split("\t");
-		// we remove the phase set from the gt info fields
-		for (int i = 8; i < splitLine.length; i++) {
-			splitLine[i] = removePhaseSetFromGTInfoField(splitLine[i]);
+		// we remove the phase set from the GT info fields if it is present
+		if (splitLine[8].contains("PS")) {
+			for (int i = 8; i < splitLine.length; i++) {
+				splitLine[i] = removePhaseSetFromGTInfoField(splitLine[i]);
+			}
+		} else {
+			for (int i = 8; i < splitLine.length; i++) {
+				splitLine[i] += ":";
+			}
 		}
 		splitLine[8] += "AA";
 		// we invert the dad genotype if needed and add the ancestral alleles field
@@ -257,7 +263,7 @@ public class PhaseWithBeagle {
 
 	/**
 	 * @param genotypeField
-	 * @return the specified genotype info field with the genotype inverted 
+	 * @return the specified genotype info field with the genotype inverted
 	 */
 	private static String invertGenotype(String genotypeField) {
 		char oldAllele1 = genotypeField.charAt(0);
@@ -274,7 +280,7 @@ public class PhaseWithBeagle {
 	private static String removePhaseSetFromGTInfoField(String gtInfoField) {
 		String[] splitInfo = gtInfoField.split(":");
 		String newInfoField = "";
-		for (int i = 0; i < splitInfo.length -1; i++) {
+		for (int i = 0; i < (splitInfo.length -1); i++) {
 			newInfoField += splitInfo[i] + ":";
 		}
 		return newInfoField;
