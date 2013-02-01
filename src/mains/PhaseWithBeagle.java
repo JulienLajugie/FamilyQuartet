@@ -147,7 +147,7 @@ public class PhaseWithBeagle {
 							SegmentalDuplication currentPaternalBeagleBlock = paternalBeagleBlocks.getBlock(currentChromo, variant.getPosition());
 							if ((currentPaternalBeagleBlock != null) && !currentPaternalBeagleBlock.equals(previousPaternalBeagleBlock)) {
 								if ((previousPaternalBeagleBlock != null) && (currentPaternalBeagleBlock.getScore() != previousPaternalBeagleBlock.getScore())) {
-									kid1PA = invertGenotype(kid1PA);
+									kid1PA = invertParentalAllele(kid1PA);
 								}
 								previousPaternalBeagleBlock = currentPaternalBeagleBlock;
 							}
@@ -155,7 +155,7 @@ public class PhaseWithBeagle {
 							SegmentalDuplication currentMaternalBeagleBlock = maternalBeagleBlocks.getBlock(currentChromo, variant.getPosition());
 							if ((currentMaternalBeagleBlock != null) && !currentMaternalBeagleBlock.equals(previousMaternalBeagleBlock)) {
 								if ((previousMaternalBeagleBlock != null) && (currentMaternalBeagleBlock.getScore() != previousMaternalBeagleBlock.getScore())) {
-									kid1MA = invertGenotype(kid1MA);
+									kid1MA = invertParentalAllele(kid1MA);
 								}
 								previousMaternalBeagleBlock = currentMaternalBeagleBlock;
 							}
@@ -269,7 +269,8 @@ public class PhaseWithBeagle {
 		char oldAllele1 = genotypeField.charAt(0);
 		char phasing = genotypeField.charAt(1);
 		char oldAllele2 = genotypeField.charAt(2);
-		return oldAllele2 + phasing + oldAllele1 + genotypeField.substring(3);
+		String invertedGT = Character.toString(oldAllele2) + Character.toString(phasing) + Character.toString(oldAllele1) + genotypeField.substring(3);
+		return invertedGT;
 	}
 
 
